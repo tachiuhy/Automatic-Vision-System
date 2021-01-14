@@ -1,9 +1,11 @@
 #include <Servo.h>
 #include <PWM.h>
-Servo myservo;
-
+int y= 0;
 int ir_pin1 = 2;
 int ir_pin2 = 3;
+int Servo_pin = 10;
+int Stepper_pin = 9;
+int Stepper_Direction = 8;
 bool hitObject1 = false;
 bool hitObject2 = false;
 int counter1 = 0;
@@ -20,13 +22,14 @@ void setup() {
 
   pinMode(ir_pin1, INPUT);
   pinMode(ir_pin2, INPUT);
-  myservo.attach(6);
+  pinMode(Servo_pin,OUTPUT);
 
   InitTimersSafe();
-  pinMode(8, OUTPUT);
-  pinMode(9, OUTPUT);
-  SetPinFrequencySafe(9, frequency);
-  digitalWrite(8, LOW);
+  pinMode(Stepper_Direction, OUTPUT);
+  pinMode(Stepper_pin, OUTPUT);
+  SetPinFrequencySafe(Stepper_pin, frequency);
+  SetPinFrequencySafe(Servo_pin, 50);
+  digitalWrite(Stepper_Direction, LOW);
 
   for ( int i = 0; i < list_num; i++){
     list[i] = 0;
@@ -38,7 +41,7 @@ void loop() {
     if (Serial.available() > 0) {
       if (Serial.readString() == "Start") {
         condition = 1;
-        pwmWrite(9, 127);
+        pwmWrite(Stepper_pin, 127);
       }}
     else {
       condition = 0;
@@ -80,7 +83,7 @@ int val2 = (digitalRead(ir_pin2));
       condition = 0;
       counter1 = 0;
       counter2 = 0;
-      pwmWrite(9, 0);
+      pwmWrite(Stepper_pin, 0);
     }
   else {
     condition = 1;
@@ -96,11 +99,12 @@ int val2 = (digitalRead(ir_pin2));
    if (counter2 == list[i]){
     FailBottle++;}}
    if (FailBottle == 1){
-    myservo.write(90);
+     y = map(10,0,20,0,255);
+     pwmWrite(Servo_pin, y);
    }
-   else{myservo.write(0);
+   else{y = map(1,0,20,0,255);
+     pwmWrite(Servo_pin, y);
     
   
 }}
-delay(400);
 }
