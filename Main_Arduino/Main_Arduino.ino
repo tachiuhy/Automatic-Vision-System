@@ -10,7 +10,7 @@ int counter1 = 0;
 int counter2 = 0;
 int condition = 0;
 int a = 1;
-int frequency = 500;
+int frequency = 1700;
 const int list_num = 6;
 int list[list_num];
 int list_index = 0;
@@ -36,7 +36,8 @@ void setup() {
 void loop() {
   while (condition == 0) {
     if (Serial.available() > 0) {
-      if (Serial.readString() == "Start") {
+      
+      if (Serial.readStringUntil('\n') == "Start" ) {
         condition = 1;
         pwmWrite(9, 127);
       }}
@@ -75,7 +76,7 @@ int val2 = (digitalRead(ir_pin2));
   
 //BottleList_&_Stop_Program_________________________________________________
   if (Serial.available() > 0) {
-      String pos = Serial.readString();
+      String pos = Serial.readStringUntil('\n');
       if (pos == "Stop") {
       condition = 0;
       counter1 = 0;
@@ -83,11 +84,18 @@ int val2 = (digitalRead(ir_pin2));
       pwmWrite(9, 0);
     }
   else {
+   
     condition = 1;
     list[list_index] = pos.toInt();
     list_index++;
     if (list_index >= list_num){
       list_index = 0;}
+    Serial.println('[');
+     for ( int i = 0; i < list_num; i++){
+      Serial.print(list[i]);
+      Serial.print(',');
+     }
+     Serial.print(']');
   }}
   
 //Servo______________________________________________________________________  
