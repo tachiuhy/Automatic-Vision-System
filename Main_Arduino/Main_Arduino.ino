@@ -45,7 +45,6 @@ void loop() {
       condition = 0;
     }}
 
-
   while (condition == 1) {
 
 //Counter1________________________________________________________
@@ -72,8 +71,6 @@ int val2 = (digitalRead(ir_pin2));
   }
   delay(5);
 
-
-  
 //BottleList_&_Stop_Program_________________________________________________
   if (Serial.available() > 0) {
       String pos = Serial.readStringUntil('\n');
@@ -107,8 +104,6 @@ int val2 = (digitalRead(ir_pin2));
     myservo.write(90);
    }
    else{myservo.write(0);
-    
-  
 }}
 delay(400);
 }
