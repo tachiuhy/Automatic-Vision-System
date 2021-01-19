@@ -6,23 +6,14 @@ bool hitObject1 = false;
 int counter1 = 0;
 int condition = 0;
 
-const int list_num = 6;
-int list[list_num];
-int list_index = 0;
-
 void setup() {
   Serial.begin(9600);
   Wire.begin(); 
   pinMode(ir_pin1, INPUT);
 
-
   InitTimersSafe();
   pinMode(9, OUTPUT);
   SetPinFrequencySafe(9, 2500);
-  
-  for ( int i = 0; i < list_num; i++){
-    list[i] = 0;
-  }
 }
 
 void loop() {
@@ -45,12 +36,12 @@ void loop() {
   if ((val1 == 0) && (hitObject1 == false) ) {
     counter1++;
     hitObject1 = true;
+    Serial.println(counter1);
   }
   else if ( (val1 == 1) && (hitObject1 == true) ) {
     hitObject1 = false;
   }
   delay(5);
-
   
 //BottleList_&_Stop_Program_________________________________________________
   if (Serial.available()) {
@@ -66,15 +57,14 @@ void loop() {
     }
   else {
     condition = 1;
-    byte(pos);
+
+    
     Wire.beginTransmission(9);
-    Wire.write(pos);
+    Wire.write(pos.toInt());
     Wire.endTransmission(); 
-    Wire.requestFrom(9, 1);    
-    if(Wire.available()) { 
-      byte i2c_rcv;   
-      i2c_rcv = Wire.read();
+    Wire.requestFrom(9, 2);    
+
     } 
   }}
   
-}}
+}
