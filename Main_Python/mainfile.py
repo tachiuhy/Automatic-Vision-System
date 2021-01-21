@@ -1,5 +1,6 @@
 from pypylon import pylon
 import time
+import numpy as np
 import cv2
 import os
 #import concurrent.futures
@@ -76,9 +77,8 @@ def ExportCSV(data):
     df.to_csv(path + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M')) + '.csv')
     print('CSV data has been exported')
 
-def list(num):
-    ser1.write(command.encode())
-    print(command)
+def nothing(_):
+    pass
 
 if __name__ == '__main__':
     Window1 = pylon.PylonImageWindow()
@@ -94,25 +94,29 @@ if __name__ == '__main__':
     print('Ready to work')
     path = r'E:\Bottle_image\\' + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M'))
 
-    check = 1
-    while check == 1:
-        print('command:')
-        condition = input()
-        if condition == 'Start':
+    Switch = np.zeros((1, 512, 3), np.uint8)
+    cv2.namedWindow('Switch')
+    switch = 'OFF \nON'
+    cv2.createTrackbar(switch, 'Switch', 0, 1, nothing)
+
+    while True:
+        cv2.imshow('Switch', Switch)
+        k = cv2.waitKey(1) & 0xFF
+        s = cv2.getTrackbarPos(switch, 'Switch')
+        if s:
+            condition == 'Start'
             ser1.write('Start\n'.encode())
-            break
-        elif condition == 'Stop':
-            ser1.write('Stop\n'.encode())
-            break
         else:
-            check = 0
+            condition == 'Stop'
+            ser1.write('Stop\n'.encode())
+    cv2.destroyAllWindows()
 
     data = {'Barcode':[],'Water level':[]}
     while condition == 'Start':
         BottleCount, imMode1, con1, p1img, p1data, imMode2, con2, p2img, p2data, imMode3 = FirstProcess(st, ser1, path,camera)
         print(BottleCount)
         if (BottleCount %2) == 0:
-            ser1.write(BottleCount.encode())
+            ser1.write(BottleCount)
         Window1.SetImage(imMode1)
         Window1.Show()
         Window2.SetImage(imMode2)
