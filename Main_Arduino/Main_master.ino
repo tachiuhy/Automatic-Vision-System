@@ -13,7 +13,7 @@ void setup() {
 
   InitTimersSafe();
   pinMode(9, OUTPUT);
-  SetPinFrequencySafe(9, 2500);
+  SetPinFrequencySafe(9, 1000);
 }
 
 void loop() {
@@ -57,8 +57,6 @@ void loop() {
     }
   else {
     condition = 1;
-
-    
     Wire.beginTransmission(9);
     Wire.write(pos.toInt());
     Wire.endTransmission(); 
@@ -66,5 +64,4 @@ void loop() {
 
     } 
   }}
-  
 }
