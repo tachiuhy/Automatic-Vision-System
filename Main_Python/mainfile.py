@@ -98,17 +98,17 @@ if __name__ == '__main__':
     cv2.namedWindow('Switch')
     switch = 'OFF \nON'
     cv2.createTrackbar(switch, 'Switch', 0, 1, nothing)
-
     while True:
         cv2.imshow('Switch', Switch)
         k = cv2.waitKey(1) & 0xFF
         s = cv2.getTrackbarPos(switch, 'Switch')
         if s:
-            condition == 'Start'
+
             ser1.write('Start\n'.encode())
+            condition = 'Start'
         else:
-            condition == 'Stop'
             ser1.write('Stop\n'.encode())
+            condition = 'Stop'
     cv2.destroyAllWindows()
 
     data = {'Barcode':[],'Water level':[]}
