@@ -1,29 +1,32 @@
 from pypylon import pylon
 import time
-import numpy as np
 import cv2
 import os
 #import concurrent.futures
-import threading
 import datetime
 import pathlib
 import pandas as pd
 #import WaterLevelProcess as WLP
 import firstsetup as fst
+import keyboard
 #import BarcodeProcess as BCP
 
 def FirstProcess(st, ser1, path, camera):
     BottleCount = int(ser1.readline())
-    time.sleep(.96)
+    time.sleep(2.2)
+    print('BottleCount', BottleCount)
+    print('time1', time.perf_counter())
     imMode1 = fst.capture(camera, st['1ple'], st['1plgm'], st['1plgn'], st['1plds'])
-    imMode2 = fst.capture(camera, st['2ple'], st['2plgm'], st['2plgn'], st['2plds'])
+    print('time2', time.perf_counter())
     imMode3 = fst.capture(camera, st['3ple'], st['3plgm'], st['3plgn'], st['3plds'])
+    print('time3', time.perf_counter())
+    imMode2 = fst.capture(camera, st['2ple'], st['2plgm'], st['2plgn'], st['2plds'])
     try:
         # start=time.perf_counter()
-        # with concurrent.futures.ProcessPoolExecutor() as executor:
-        #     p2 = executor.submit(WLP.WaterLevelProcess, imMode2.Array, BottleCount, path)
-        #     p1 = executor.submit(BCP.Barcode, imMode1.Array)
-        stop = time.perf_counter()
+        # # with concurrent.futures.ProcessPoolExecutor() as executor:
+        # #     p2 = executor.submit(WLP.WaterLevelProcess, imMode2.Array, BottleCount, path)
+        # #     p1 = executor.submit(BCP.Barcode, imMode1.Array)
+        # stop = time.perf_counter()
         # print(round(stop - start, 2))
         # con2, p2img, p2data = p2.result()
         # con1, p1img, p1data = p1.result()
@@ -41,9 +44,9 @@ def FirstProcess(st, ser1, path, camera):
 
         try:
             print('Saving images...')
-            cv2.imwrite(name1, imMode1.Array)
-            cv2.imwrite(name2, imMode2.Array)
-            cv2.imwrite(name3, imMode3.Array)
+            cv2.imwrite(name1, imMode1)
+            cv2.imwrite(name2, imMode2)
+            cv2.imwrite(name3, imMode3)
             cv2.imwrite(name4, p1img)
             print('Save successfully')
         except Exception as e:
@@ -62,9 +65,9 @@ def FirstProcess(st, ser1, path, camera):
             name2 = os.path.join(path, 'Mode2', str(BottleCount) + '.tiff')
             name3 = os.path.join(path, 'Mode3', str(BottleCount) + '.tiff')
             print('Saving images...')
-            cv2.imwrite(name1, imMode1.Array)
-            cv2.imwrite(name2, imMode2.Array)
-            cv2.imwrite(name3, imMode3.Array)
+            cv2.imwrite(name1, imMode1)
+            cv2.imwrite(name2, imMode2)
+            cv2.imwrite(name3, imMode3)
             print('Save successfully')
         except Exception as e:
             print('Failed: ', str(e))
@@ -77,16 +80,14 @@ def ExportCSV(data):
     df.to_csv(path + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M')) + '.csv')
     print('CSV data has been exported')
 
-def nothing(_):
-    pass
 
 if __name__ == '__main__':
-    Window1 = pylon.PylonImageWindow()
-    Window1.Create(1)
-    Window2 = pylon.PylonImageWindow()
-    Window2.Create(2)
-    Window3 = pylon.PylonImageWindow()
-    Window3.Create(3)
+    # Window1 = pylon.PylonImageWindow()
+    # Window1.Create(1)
+    # Window2 = pylon.PylonImageWindow()
+    # Window2.Create(2)
+    # Window3 = pylon.PylonImageWindow()
+    # Window3.Create(3)
     camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
     ser1 = fst.arduinoPort()
     st = fst.SaveFile_read()
@@ -94,37 +95,31 @@ if __name__ == '__main__':
     print('Ready to work')
     path = r'E:\Bottle_image\\' + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M'))
 
-    Switch = np.zeros((1, 512, 3), np.uint8)
-    cv2.namedWindow('Switch')
-    switch = 'OFF \nON'
-    cv2.createTrackbar(switch, 'Switch', 0, 1, nothing)
-    while True:
-        cv2.imshow('Switch', Switch)
-        k = cv2.waitKey(1) & 0xFF
-        s = cv2.getTrackbarPos(switch, 'Switch')
-        if s:
-
+    check = 1
+    while check == 1:
+        print('command:')
+        condition = input()
+        if condition == 'Start':
             ser1.write('Start\n'.encode())
-            condition = 'Start'
+            break
         else:
-            ser1.write('Stop\n'.encode())
-            condition = 'Stop'
-    cv2.destroyAllWindows()
+            check = 0
 
-    data = {'Barcode':[],'Water level':[]}
+
     while condition == 'Start':
         BottleCount, imMode1, con1, p1img, p1data, imMode2, con2, p2img, p2data, imMode3 = FirstProcess(st, ser1, path,camera)
-        print(BottleCount)
+
         if (BottleCount %2) == 0:
-            ser1.write(BottleCount)
-        Window1.SetImage(imMode1)
-        Window1.Show()
-        Window2.SetImage(imMode2)
-        Window2.Show()
-        Window3.SetImage(imMode3)
-        Window3.Show()
-        data['Barcode'].append(p1data)
-        data['Water level'].append(p2data)
-    ExportCSV(data)
+            ser1.write(str(BottleCount).encode())
+        # Window1.SetImage(imMode1)
+        # Window1.Show()
+        # Window2.SetImage(imMode2)
+        # Window2.Show()
+        # Window3.SetImage(imMode3)
+        # Window3.Show()
+
+    #     data['Barcode'].append(p1data)
+    #     data['Water level'].append(p2data)
+    # ExportCSV(data)
     fst.ledcontrol_send(['cl'])
     print('Program has stopped')
