@@ -54,21 +54,23 @@ void loop() {
   delay(5);
   if (Wire.available() > 0 ) {
     x = Wire.read();
+    Serial.print("x: ");
+    Serial.println(x);
     if (x == 0) {
       counter2 = 0;
     }
     else {
-      list[list_index] = x;
+      list[list_index] =  x;
       list_index++;
       if (list_index >= list_num) {
         list_index = 0;
       }
-//      Serial.println('[');
-//      for ( int i = 0; i < list_num; i++) {
-//        Serial.print(list[i]);
-//        Serial.print(',');
-//      }
-//      Serial.print(']');
+      Serial.println('[');
+      for ( int i = 0; i < list_num; i++) {
+        Serial.print(list[i]);
+        Serial.print(',');
+      }
+      Serial.println(']');
 
     }
   }
@@ -78,14 +80,14 @@ void loop() {
     if (counter2 == list[i] && counter2 != 0) {
       list[i] = 0; 
       Serial.print('c');    
-      int  angle  = 47;
+      int  angle  = 60;
       pos = (angle / 18.0) + 2;
       
-      for (int t = 0; t < 500; t++){
+      for (int t = 0; t < 800; t++){
       y = map(pos, 0, 50, 0, 255 );
       pwmWrite(10, y);
       delay(1);}
-      for (int t = 0; t < 500; t++){
+      for (int t = 0; t < 800; t++){
       y = map(2, 0, 50, 0, 255 );
       pwmWrite(10, y);
       delay(1);}
@@ -96,5 +98,6 @@ void loop() {
 void receiveEvent() {
   while ( Wire.available() > 1) {
     x = Wire.read();
+
   }
 }
