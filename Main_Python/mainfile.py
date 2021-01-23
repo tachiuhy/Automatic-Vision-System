@@ -13,7 +13,7 @@ import keyboard
 
 def FirstProcess(st, ser1, path, camera):
     BottleCount = int(ser1.readline())
-    time.sleep(2.2)
+    time.sleep(2)
     print('BottleCount', BottleCount)
     print('time1', time.perf_counter())
     imMode1 = fst.capture(camera, st['1ple'], st['1plgm'], st['1plgn'], st['1plds'])
