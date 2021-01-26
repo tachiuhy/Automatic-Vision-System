@@ -1,4 +1,3 @@
-
 #include <Wire.h>
 #define SLAVE_ADDR 9
 #define ANSWERSIZE 2

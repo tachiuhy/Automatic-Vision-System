@@ -1,4 +1,5 @@
 uint16_t t;
+uint16_t icr = 0xffff;
 
 //---------------Configurations------------------------------
 void configtoPWM16() {
