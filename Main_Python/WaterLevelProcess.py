@@ -38,6 +38,7 @@ def preprocessing(img):
     hold[500::, :] = img3
     hold = imu.auto_canny(hold)
     hold = hold*2
+    hold = cv2.dilate(hold, (5, 5))
     return hold
 
 def detect_lib(edge, img_rgb):
@@ -64,14 +65,12 @@ def detect_waterlevel(edge, img_rgb):
     (cnts, _) = contours.sort_contours(cnts)
     for cnt in cnts:
         area = cv2.contourArea(cnt)
-        print('arae1', area)
         if ( 2000 < area < 100000):
             box1 = cv2.minAreaRect(cnt)
             box1 = cv2.boxPoints(box1)
             box1 = np.array(box1, dtype="int")
             box1 = perspective.order_points(box1)
             box1 = box1.astype(int)
-            print('box1', box1)
             cv2.drawContours(img_rgb, [box1], -1, (0, 0, 255), 3)
             return box1
         else:
@@ -102,13 +101,13 @@ def water_level_val(pt1, pt2, mid_ptX, mid_ptY):
     b = pt1[0] - pt2[0]
     c = a * pt1[0] + b * pt1[1]
     level_val = (np.abs(a*mid_ptX + b*mid_ptY + c))/np.sqrt(a**2 + b**2)
-    cmperpixel = 6/1581
+    cmperpixel = 0.0039197
     level_val_cm = level_val*cmperpixel
     return level_val_cm
 
 def WaterLevelProcess(img,count,path):
 
-    img = img[300:1000, 600:1600]
+    img = img[300:1000, 700:1700]
     img_rgb = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
     edge = preprocessing(img)
     box_of_lid = detect_lib(edge, img_rgb)
@@ -118,11 +117,11 @@ def WaterLevelProcess(img,count,path):
         [tll, bll, brl, trl] = take4point(box_of_lid)
         pt1 = []
         pt1.append(tll[0])
-        pt1.append(int(tll[1] + (bll[1] - tll[1]) * 0.75))
+        pt1.append(int(tll[1] + (bll[1] - tll[1]) * 0.55))
         pt1 = tuple(pt1)
         pt2 = []
         pt2.append(trl[0])
-        pt2.append(int(trl[1] + (brl[1] - trl[1]) * 0.75))
+        pt2.append(int(trl[1] + (brl[1] - trl[1]) * 0.55))
         pt2 = tuple(pt2)
 
         # Tim vi tri mat cong duoi cua muc nuoc
@@ -131,22 +130,28 @@ def WaterLevelProcess(img,count,path):
         cv2.circle(edge, (int(mid_x), int(mid_y)), 3, 255, -1)
 
         # Tinh khoang cach tu diem muc nuoc va duong co chai
-        mid_x_lib, mid_y_lid = mid_point(tll, trl)
-        p2data = water_level_val(pt1, pt2, int(mid_x), int(mid_y))
-        p2data = round(p2data, 4)
-        if 3.4 < p2data < 3.7:
+        mid_x_lib, mid_y_lid = mid_point(pt1, pt2)
+        cmperpixel = 0.0039197
+        p2data = abs(mid_y - mid_y_lid)
+        p2data = p2data * cmperpixel
+        if 1.35 < p2data < 1.65:
             cv2.drawContours(img_rgb, [box_of_waterlevel], -1, (0, 255, 0), 3)
             cv2.drawContours(img_rgb, [box_of_lid], -1, (0, 255, 0), 3)
+            cv2.drawContours(edge, [box_of_waterlevel], -1, 255, 3)
+            cv2.drawContours(edge, [box_of_lid], -1, 255, 3)
             cv2.putText(img_rgb, 'True', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(edge, 'True', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2)
         else:
             cv2.drawContours(img_rgb, [box_of_waterlevel], -1, (0, 0, 255), 3)
             cv2.drawContours(img_rgb, [box_of_lid], -1, (0, 0, 255), 3)
+            cv2.drawContours(edge, [box_of_waterlevel], -1, 255, 3)
+            cv2.drawContours(edge, [box_of_lid], -1, 255, 3)
             cv2.putText(img_rgb, 'False', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            cv2.putText(edge, 'False', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2)
             p2data = 'Water level is wrong'
         # Tinh do ho nam cua lo
         p3data = water_level_val(pt1, pt2, int(mid_x_lib), int(mid_y_lid))
-
-        path = path + '_result'
+        path = path + r'_result\\BackLight'
         pathlib.Path(path).mkdir(parents=True, exist_ok=True)
         name = os.path.join(path, str(count) + '.tiff')
 
@@ -160,9 +165,10 @@ def WaterLevelProcess(img,count,path):
         return 'RightWL', img_rgb, str(p2data), str(p3data)
     else:
         cv2.putText(img_rgb, 'False', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        cv2.putText(edge, 'False', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2)
         p2data = 'Water level is wrong'
         p3data = 'Cap not found'
-        path = path + '_result'
+        path = path + r'_result\\BackLight'
         pathlib.Path(path).mkdir(parents=True, exist_ok=True)
         name = os.path.join(path, str(count) + '.tiff')
         try:

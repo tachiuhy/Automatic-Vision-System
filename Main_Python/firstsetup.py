@@ -22,8 +22,8 @@ def capture(camera,Exposure,Gamma,Gain,DigitalShift):
     camera.Gamma = Gamma
     try:
         camera.PixelFormat = "Mono8"
-    except:
-        pass
+    except Exception as e:
+        print('Failed: ', str(e))
     camera.Gain = Gain
     camera.DigitalShift = DigitalShift
 

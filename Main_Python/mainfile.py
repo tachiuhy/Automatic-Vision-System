@@ -11,24 +11,23 @@ import firstsetup as fst
 import matplotlib.pyplot as plt
 import numpy as np
 import BarcodeProcess as BCP
+import WaterLevelChecking as WLC
 
 def FirstProcess(st, ser1, path, camera):
     BottleCount = int(ser1.readline())
     time.sleep(1.9)
     print('BottleCount', BottleCount)
-    print('time1', time.perf_counter())
+    time_start = time.perf_counter()
+    print('time_start', time_start)
     imMode1 = fst.capture(camera, st['1ple'], st['1plgm'], st['1plgn'], st['1plds'])
-    print('time2', time.perf_counter())
     imMode3 = fst.capture(camera, st['3ple'], st['3plgm'], st['3plgn'], st['3plds'])
-    print('time3', time.perf_counter())
     imMode2 = fst.capture(camera, st['2ple'], st['2plgm'], st['2plgn'], st['2plds'])
 
+
     try:
-        start = time.perf_counter()
-        con2, p2img, p2data, p3data = WLP.WaterLevelProcess(imMode3, BottleCount, path)
         con1, p1img, p1data = BCP.Barcode(imMode1)
-        stop = time.perf_counter()
-        print('time :', round(stop - start, 2))
+        con3, p3img, p2data, p3data = WLP.WaterLevelProcess(imMode3, BottleCount, path)
+        con2, p2img, p4data = WLC.WaterLevelChecking(imMode2, BottleCount, path)
 
 
         pathlib.Path(path + '\\Mode1\\').mkdir(parents=True,exist_ok=True)
@@ -52,7 +51,8 @@ def FirstProcess(st, ser1, path, camera):
         except Exception as e:
             print('Failed: ', str(e))
         cv2.waitKey(10)
-        return BottleCount, imMode1, con1, p1img, p1data, imMode2, con2, p2img, p2data, p3data, imMode3
+        return BottleCount, imMode1, con1, p1img, p1data, imMode2, con2, p2img, p4data,  con3, p3img,\
+               p2data, p3data, imMode3
     except:
         print('Cannot processed')
         try:
@@ -72,9 +72,8 @@ def FirstProcess(st, ser1, path, camera):
         except Exception as e:
             print('Failed: ', str(e))
         cv2.waitKey(10)
-        return BottleCount, imMode1, 'FalseBC', None, 'Object not found', imMode2, 'FalseWL', None, 'Object not found', \
-               'Cap Not Found', imMode3
-
+        return BottleCount, imMode1, 'FalseBC', None, 'Object not found', imMode2, 'FalseDF', None, 'Object not found', \
+                'FalseWL', None,  'Object not found', 'Cap Not Found', imMode3
 
 def ExportCSV(data):
     df = pd.DataFrame(data)
@@ -104,21 +103,21 @@ if __name__ == '__main__':
             check = 0
 
     while condition == 'Start':
-        BottleCount, imMode1, con1, p1img, p1data, imMode2, con2, p2img, p2data, p3data, imMode3 = FirstProcess(st, ser1,
-                                                                                                                path,
-                                                                                                                camera)
-        print('barcode: ', p1data)
-        print('WaterLevel: ', p2data)
-        print('Cap:', p3data)
-        if (p2data =='Water level is wrong'):
+        BottleCount, imMode1, con1, p1img, p1data, imMode2, con2, p2img, p4data, con3, p3img, p2data, p3data, imMode3 = FirstProcess(st, ser1, path, camera)
+
+
+
+        if p4data == 'False':
+            cv2.putText(p3img, 'DF: False', (100, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
             ser1.write(str(BottleCount).encode())
-        cv2.imshow('backlight', p2img)
+        if (p4data == 'True') and (p2data =='Water level is wrong') :
+            cv2.putText(p3img, 'DF: True', (100, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+            ser1.write(str(BottleCount).encode())
+        cv2.imshow('backlight', p3img)
         cv2.waitKey(1)
-
-
         data['Name'].append(p1data)
         data['Water level'].append(p2data)
-        if BottleCount == 35:
+        if BottleCount == 90:
             ser1.write('Stop\n'.encode())
             break
     ExportCSV(data)

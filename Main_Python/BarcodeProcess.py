@@ -4,7 +4,7 @@ from pyzbar.pyzbar import ZBarSymbol
 import numpy as np
 
 def Barcode(img):
-    img = img[1080:1920, 900:1200]
+    img = img[1060:1960, 950:1170]
     equ = cv2.equalizeHist(img)
     img_smoothed = cv2.GaussianBlur(equ, (5, 5), np.sqrt(8))
     barcodes = pzb.decode(img_smoothed, symbols=[ZBarSymbol.CODE128])

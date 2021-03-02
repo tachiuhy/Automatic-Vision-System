@@ -88,7 +88,7 @@ void loop() {
         k = (angle - pow(1.5, t));
 
         if ((k > 0) && (k < angle)) {
-          Serial.println(k);
+//          Serial.println(k);
           y = map(k, 0, 180, 11500, 41550);
           Write16(10, y);
           delay(90);
