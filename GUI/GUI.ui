@@ -136,6 +136,32 @@
      <attribute name="title">
       <string>Settings</string>
      </attribute>
+     <widget class="QRadioButton" name="Radio_RunningMode">
+      <property name="geometry">
+       <rect>
+        <x>100</x>
+        <y>10</y>
+        <width>101</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Online</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label1">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>71</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Running Mode</string>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>

@@ -43,6 +43,12 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tab_Overview, "")
         self.tab_Settings = QtWidgets.QWidget()
         self.tab_Settings.setObjectName("tab_Settings")
+        self.Radio_RunningMode = QtWidgets.QRadioButton(self.tab_Settings)
+        self.Radio_RunningMode.setGeometry(QtCore.QRect(100, 10, 101, 17))
+        self.Radio_RunningMode.setObjectName("Radio_RunningMode")
+        self.label1 = QtWidgets.QLabel(self.tab_Settings)
+        self.label1.setGeometry(QtCore.QRect(10, 10, 71, 16))
+        self.label1.setObjectName("label1")
         self.tabWidget.addTab(self.tab_Settings, "")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -56,9 +62,12 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
-        
+
 # Custom_________________________________________________________________________________
+        self.Radio_RunningMode.clicked.connect(self.Radio_Button_Set)
+
         self.Main_Thread = mainfile.MainFunction_Thread()
+        self.Main_Thread.StrSignal.connect(self.printConsole)
         self.Button_Start.clicked.connect(self.System_Start)
 
         self.pushButton_Browse.clicked.connect(self.Browse_path)
@@ -71,10 +80,16 @@ class Ui_MainWindow(object):
         self.Button_Start.setText(_translate("MainWindow", "Start"))
         self.pushButton_Browse.setText(_translate("MainWindow", "Browse"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_Overview), _translate("MainWindow", "Overview"))
+        self.Radio_RunningMode.setText(_translate("MainWindow", "Online"))
+        self.label1.setText(_translate("MainWindow", "Running Mode"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_Settings), _translate("MainWindow", "Settings"))
 
 # Function_______________________
     def System_Start(self):
+        if self.Radio_RunningMode.isChecked() == True:
+            self.Main_Thread.RunningState = 'Offline'
+        else:
+            self.Main_Thread.RunningState = 'Online'
         self.Main_Thread.path = self.Line_Edit_Path.text()
         self.Main_Thread.start()
 
@@ -82,6 +97,15 @@ class Ui_MainWindow(object):
         dialog = QtWidgets.QFileDialog()                                # Open Windows explorer
         path = dialog.getExistingDirectory(self.centralwidget, "Select Directory")
         self.Line_Edit_Path.setText(path)
+
+    def Radio_Button_Set(self):
+        if self.Radio_RunningMode.isChecked() == True:
+            self.Radio_RunningMode.setText('Offline')
+        else:
+            self.Radio_RunningMode.setText('Online')
+
+    def printConsole(self, result):
+        self.textBrowser.append(result)
 
 if __name__ == "__main__":
     import sys
