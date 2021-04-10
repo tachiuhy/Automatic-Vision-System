@@ -12,98 +12,13 @@ import Imaging_Server as IS
 import imutils as imu
 
 
-class MainFunction_Thread(QtCore.QThread):
-    StrSignal = QtCore.pyqtSignal(str)
-    # Im1Signal = QtCore.pyqtSignal(object)
-    # Im2Signal = QtCore.pyqtSignal(object)
-    # Im3Signal = QtCore.pyqtSignal(object)
-
-    def __init__(self):
-        QtCore.QThread.__init__(self)
-        self.path = ''
-        self.RunningState = 'Online'
-
-    def run(self):
-        print('Main function initialized')
-        data = {}
-        data['Name'] = []
-        data['Water level (mm)'] = []
-        data['Water level presence'] = []
-        data['Cap Checking'] = []
-
-        if self.RunningState == 'Online':
-            print('Online')
-            camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
-            setup = FST.FirstSetup()
-            Serial_Port = setup.GetArduino()
-            Read_Content = setup.SaveFile_read()
-            commandlist = setup.Command_Input().commandlist
-            setup.ledcontrol_send(commandlist)
-            setup.Serial_port.write('Start\n'.encode())
-
-        elif self.RunningState == 'Offline':
-            print('Offine')
-            camera = None
-            setup = FST.Offline_FirstSetup()
-            Serial_Port = setup.GetArduino()
-            Read_Content = setup.SaveFile_read()
-            commandlist = setup.Command_Input().commandlist
-            setup.ledcontrol_send(commandlist)
-
-        self.StrSignal.emit('Ready to work')
-        print('Ready to work')
-        self.path = self.path + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M'))
-
-        while True:
-            Running = FirstProcess(self.RunningState, Read_Content, Serial_Port, self.path, camera)
-
-            data['Name'].append(Running.p1data)
-            data['Water level presence'].append(Running.p4data)
-            data['Water level (mm)'].append(Running.p2data)
-            data['Cap Checking'].append(Running.p3data)
-            cv2.putText(Running.processed_img3, 'Barcode: ' + str(Running.p1data),
-                        (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-
-            if (Running.p4data == 'False') or (Running.p2data == 'Water level is wrong') or (
-                    Running.p3data == 'Cap opening'):
-                cv2.putText(Running.processed_img3, 'DF: False', (100, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                cv2.putText(Running.processed_img3, 'Water level: False', (100, 200), cv2.FONT_HERSHEY_SIMPLEX,
-                            1, (255, 0, 0), 2)
-                cv2.putText(Running.processed_img3, 'Cap is opening', (100, 250), cv2.FONT_HERSHEY_SIMPLEX,
-                            1, (255, 0, 0), 2)
-                setup.Serial_port.write(str(Running.BottleCount).encode())
-            else:
-                cv2.putText(Running.processed_img3, 'DF: True', (100, 150), cv2.FONT_HERSHEY_SIMPLEX,
-                            1, (255, 0, 0), 2)
-                cv2.putText(Running.processed_img3, 'Water level: ' + str(Running.p2data), (100, 200),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                cv2.putText(Running.processed_img3, 'Cap is closing', (100, 250), cv2.FONT_HERSHEY_SIMPLEX,
-                            1, (255, 0, 0), 2)
-
-            cv2.imshow('Backlight', imu.resize(Running.processed_img3, width=400))
-            cv2.imshow('Darkfield', imu.resize(Running.Mode2_img[800:1050, 700:1700], width=400))
-            cv2.imshow('Label', imu.resize(Running.Mode1_img[900:1950, 400:2000], width=400))
-            cv2.waitKey(1)
-
-            if Running.BottleCount == 360:
-                setup.Serial_port.write('Stop\n'.encode())
-                break
-        self.ExportCSV(data)
-        setup.ledcontrol_send(['cl'])
-        print('Program has stopped')    ###############################################
-
-    def ExportCSV(self, data):
-        df = pd.DataFrame(data)
-        df.to_csv(self.path + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M')) + '.csv')
-        print('CSV data has been exported')
-
-
-class FirstProcess(MainFunction_Thread):
-    def __int__(self, RunningState, Save_File_Content, Serial_port, path, camera):
-        super(FirstProcess, self).__int__(RunningState, Save_File_Content, Serial_port, path, camera)
+class FirstProcess:
+    def __init__(self, RunningState, Save_File_Content, Serial_port, path, camera):
+        print('alo')
         self.RunningState = RunningState
         self.BottleCount = 0
         if RunningState == 'Online':
+            print('Running Online')
             self.st = Save_File_Content
             self.Serial_Port = Serial_port
             self.save_path = path
@@ -117,6 +32,7 @@ class FirstProcess(MainFunction_Thread):
             self.Mode3_img = FST.capture(camera, self.st['3ple'], self.st['3plgm'], self.st['3plgn'], self.st['3plds'])
             self.Mode2_img = FST.capture(camera, self.st['2ple'], self.st['2plgm'], self.st['2plgn'], self.st['2plds'])
         elif RunningState == 'Offline':
+            print('Running Offine')
             self.save_path = path
             self.BottleCount += 1
             print('BottleCount', self.BottleCount)
@@ -188,3 +104,88 @@ class FirstProcess(MainFunction_Thread):
             self.processed_img3 = None
             self.p2data = 'Fail Water level'
             self.p3data = 'Opened Cap'
+
+
+class MainFunction_Thread(QtCore.QThread):
+    StrSignal = QtCore.pyqtSignal(str)
+    # Im1Signal = QtCore.pyqtSignal(object)
+    # Im2Signal = QtCore.pyqtSignal(object)
+    # Im3Signal = QtCore.pyqtSignal(object)
+
+    def __init__(self):
+        QtCore.QThread.__init__(self)
+        self.path = ''
+        self.RunningState = 'Online'
+
+    def run(self):
+        print('Main function initialized')
+        data = {}
+        data['Name'] = []
+        data['Water level (mm)'] = []
+        data['Water level presence'] = []
+        data['Cap Checking'] = []
+
+        if self.RunningState == 'Online':
+            print('Online')
+            camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+            setup = FST.FirstSetup()
+            Serial_Port = setup.GetArduino()
+            Read_Content = setup.SaveFile_read()
+            commandlist = setup.Command_Input().commandlist
+            setup.ledcontrol_send(commandlist)
+            setup.Serial_port.write('Start\n'.encode())
+
+        elif self.RunningState == 'Offline':
+            print('Offine')
+            camera = 'Offline Camera'
+            setup = FST.Offline_FirstSetup()
+            Serial_Port = setup.GetArduino()
+            Read_Content = setup.SaveFile_read()
+            setup.Command_Input()
+            commandlist = setup.commandlist
+            setup.ledcontrol_send(commandlist)
+        self.StrSignal.emit("Ready to work")
+        self.path = self.path + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M'))
+
+        while True:
+            Running = FirstProcess(self.RunningState, Read_Content, Serial_Port, self.path, camera)
+
+            data['Name'].append(Running.p1data)
+            data['Water level presence'].append(Running.p4data)
+            data['Water level (mm)'].append(Running.p2data)
+            data['Cap Checking'].append(Running.p3data)
+            cv2.putText(Running.processed_img3, 'Barcode: ' + str(Running.p1data),
+                        (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+            if (Running.p4data == 'False') or (Running.p2data == 'Water level is wrong') or (
+                    Running.p3data == 'Cap opening'):
+                cv2.putText(Running.processed_img3, 'DF: False', (100, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                cv2.putText(Running.processed_img3, 'Water level: False', (100, 200), cv2.FONT_HERSHEY_SIMPLEX,
+                            1, (255, 0, 0), 2)
+                cv2.putText(Running.processed_img3, 'Cap is opening', (100, 250), cv2.FONT_HERSHEY_SIMPLEX,
+                            1, (255, 0, 0), 2)
+                setup.Serial_port.write(str(Running.BottleCount).encode())
+            else:
+                cv2.putText(Running.processed_img3, 'DF: True', (100, 150), cv2.FONT_HERSHEY_SIMPLEX,
+                            1, (255, 0, 0), 2)
+                cv2.putText(Running.processed_img3, 'Water level: ' + str(Running.p2data), (100, 200),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                cv2.putText(Running.processed_img3, 'Cap is closing', (100, 250), cv2.FONT_HERSHEY_SIMPLEX,
+                            1, (255, 0, 0), 2)
+
+            cv2.imshow('Backlight', imu.resize(Running.processed_img3, width=400))
+            cv2.imshow('Darkfield', imu.resize(Running.Mode2_img[800:1050, 700:1700], width=400))
+            cv2.imshow('Label', imu.resize(Running.Mode1_img[900:1950, 400:2000], width=400))
+            cv2.waitKey(1)
+
+            if Running.BottleCount == 360:
+                setup.Serial_port.write('Stop\n'.encode())
+                break
+        self.ExportCSV(data)
+        setup.ledcontrol_send(['cl'])
+        print('Program has stopped')    ###############################################
+
+    def ExportCSV(self, data):
+        df = pd.DataFrame(data)
+        df.to_csv(self.path + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M')) + '.csv')
+        print('CSV data has been exported')

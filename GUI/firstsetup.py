@@ -185,7 +185,7 @@ def offline_capture(image_path, count):
     path1 = os.path.join(image_path, 'Mode1', str(count) + '.tiff')
     path2 = os.path.join(image_path, 'Mode2', str(count) + '.tiff')
     path3 = os.path.join(image_path, 'Mode3', str(count) + '.tiff')
-    Mode1_img = cv2.imread(path1)
-    Mode2_img = cv2.imread(path2)
-    Mode3_img = cv2.imread(path3)
+    Mode1_img = cv2.imread(path1, 0)
+    Mode2_img = cv2.imread(path2, 0)
+    Mode3_img = cv2.imread(path3, 0)
     return Mode1_img, Mode2_img, Mode3_img
