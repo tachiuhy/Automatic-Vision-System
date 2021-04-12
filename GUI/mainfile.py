@@ -11,12 +11,10 @@ import firstsetup as FST
 import Imaging_Server as IS
 import imutils as imu
 
-
 class FirstProcess:
-    def __init__(self, RunningState, Save_File_Content, Serial_port, path, camera):
+    def __init__(self, RunningState, Save_File_Content, Serial_port, path, camera, count):
         print('alo')
         self.RunningState = RunningState
-        self.BottleCount = 0
         if RunningState == 'Online':
             print('Running Online')
             self.st = Save_File_Content
@@ -34,11 +32,11 @@ class FirstProcess:
         elif RunningState == 'Offline':
             print('Running Offine')
             self.save_path = path
-            self.BottleCount += 1
+            self.BottleCount = count
             print('BottleCount', self.BottleCount)
             time_start = time.perf_counter()
             print('time_start', time_start)  # show command
-            self.Mode1_img, self.Mode2_img, self.Mode3_img = FST.offline_capture(r'E:\2021-03-01_13.28', self.BottleCount)
+            self.Mode1_img, self.Mode2_img, self.Mode3_img = FST.offline_capture(r'D:\img test', self.BottleCount)
 
         try:
             # Processing Image
@@ -146,9 +144,10 @@ class MainFunction_Thread(QtCore.QThread):
             setup.ledcontrol_send(commandlist)
         self.StrSignal.emit("Ready to work")
         self.path = self.path + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M'))
-
+        count = 0
         while True:
-            Running = FirstProcess(self.RunningState, Read_Content, Serial_Port, self.path, camera)
+            count += 1
+            Running = FirstProcess(self.RunningState, Read_Content, Serial_Port, self.path, camera, count)
 
             data['Name'].append(Running.p1data)
             data['Water level presence'].append(Running.p4data)
@@ -178,7 +177,7 @@ class MainFunction_Thread(QtCore.QThread):
             cv2.imshow('Label', imu.resize(Running.Mode1_img[900:1950, 400:2000], width=400))
             cv2.waitKey(1)
 
-            if Running.BottleCount == 360:
+            if Running.BottleCount == 30:
                 setup.Serial_port.write('Stop\n'.encode())
                 break
         self.ExportCSV(data)
