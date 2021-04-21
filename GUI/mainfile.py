@@ -11,15 +11,16 @@ import firstsetup as FST
 import Imaging_Server as IS
 import imutils as imu
 
+
 class FirstProcess:
     def __init__(self, RunningState, Save_File_Content, Serial_port, path, camera, count):
-        print('alo')
         self.RunningState = RunningState
+        self.path = path
         if RunningState == 'Online':
             print('Running Online')
             self.st = Save_File_Content
             self.Serial_Port = Serial_port
-            self.save_path = path
+            self.save_path = path + '\\' + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M'))
             self.Camera = camera
             self.BottleCount = int(self.Serial_Port.readline())
             time.sleep(1.9)     # tuning
@@ -31,12 +32,12 @@ class FirstProcess:
             self.Mode2_img = FST.capture(camera, self.st['2ple'], self.st['2plgm'], self.st['2plgn'], self.st['2plds'])
         elif RunningState == 'Offline':
             print('Running Offine')
-            self.save_path = path
+            self.save_path = path + '\\' + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M'))
             self.BottleCount = count
             print('BottleCount', self.BottleCount)
             time_start = time.perf_counter()
             print('time_start', time_start)  # show command
-            self.Mode1_img, self.Mode2_img, self.Mode3_img = FST.offline_capture(r'D:\img test', self.BottleCount)
+            self.Mode1_img, self.Mode2_img, self.Mode3_img = FST.offline_capture(self.path, self.BottleCount)
 
         try:
             # Processing Image
@@ -106,9 +107,9 @@ class FirstProcess:
 
 class MainFunction_Thread(QtCore.QThread):
     StrSignal = QtCore.pyqtSignal(str)
-    # Im1Signal = QtCore.pyqtSignal(object)
-    # Im2Signal = QtCore.pyqtSignal(object)
-    # Im3Signal = QtCore.pyqtSignal(object)
+    Im1Signal = QtCore.pyqtSignal(object)
+    Im2Signal = QtCore.pyqtSignal(object)
+    Im3Signal = QtCore.pyqtSignal(object)
 
     def __init__(self):
         QtCore.QThread.__init__(self)
@@ -124,6 +125,7 @@ class MainFunction_Thread(QtCore.QThread):
         data['Cap Checking'] = []
 
         if self.RunningState == 'Online':
+            self.StrSignal.emit("System is running Online")
             print('Online')
             camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
             setup = FST.FirstSetup()
@@ -134,6 +136,7 @@ class MainFunction_Thread(QtCore.QThread):
             setup.Serial_port.write('Start\n'.encode())
 
         elif self.RunningState == 'Offline':
+            self.StrSignal.emit("System is running Offline")
             print('Offine')
             camera = 'Offline Camera'
             setup = FST.Offline_FirstSetup()
@@ -143,7 +146,7 @@ class MainFunction_Thread(QtCore.QThread):
             commandlist = setup.commandlist
             setup.ledcontrol_send(commandlist)
         self.StrSignal.emit("Ready to work")
-        self.path = self.path + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M'))
+        self.path = self.path
         count = 0
         while True:
             count += 1
@@ -172,10 +175,14 @@ class MainFunction_Thread(QtCore.QThread):
                 cv2.putText(Running.processed_img3, 'Cap is closing', (100, 250), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (255, 0, 0), 2)
 
-            cv2.imshow('Backlight', imu.resize(Running.processed_img3, width=400))
-            cv2.imshow('Darkfield', imu.resize(Running.Mode2_img[800:1050, 700:1700], width=400))
-            cv2.imshow('Label', imu.resize(Running.Mode1_img[900:1950, 400:2000], width=400))
-            cv2.waitKey(1)
+            self.Im1Signal.emit(Running.Mode1_img)
+            self.Im2Signal.emit(Running.Mode2_img)
+            self.Im3Signal.emit(Running.processed_img3)
+
+            # cv2.imshow('Backlight', imu.resize(Running.processed_img3, width=400))
+            # cv2.imshow('Darkfield', imu.resize(Running.Mode2_img[800:1050, 700:1700], width=400))
+            # cv2.imshow('Label', imu.resize(Running.Mode1_img[900:1950, 400:2000], width=400))
+            # cv2.waitKey(1)
 
             if Running.BottleCount == 30:
                 setup.Serial_port.write('Stop\n'.encode())

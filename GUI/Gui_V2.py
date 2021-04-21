@@ -1,9 +1,9 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QPixmap, QImage
 import mainfile
-import firstsetup as FST
 import cv2
 import imutils as imu
+import numpy as np
 
 
 class Ui_MainWindow(object):
@@ -83,7 +83,11 @@ class Ui_MainWindow(object):
 
         self.Main_Thread = mainfile.MainFunction_Thread()
         self.Main_Thread.StrSignal.connect(self.printConsole)
+        self.Main_Thread.Im1Signal.connect(self.setPhoto1)
+        self.Main_Thread.Im2Signal.connect(self.setPhoto2)
+        self.Main_Thread.Im3Signal.connect(self.setPhoto3)
         self.Button_Start.clicked.connect(self.System_Start)
+
 
         self.pushButton_Browse.clicked.connect(self.Browse_path)
 
@@ -121,25 +125,27 @@ class Ui_MainWindow(object):
 
     def printConsole(self, result):
         self.textBrowser.append(result)
-    def setPhoto(self, processImg1, processImg2, processImg3):
-        img1_processed = imu.resize(processImg1, width=600)
-        frame1 = cv2.cvtColor(img1_processed, cv2.COLOR_BGR2RGB)
-        cv2.waitKey(1000)
-        img1_processed = QImage(frame1, frame1.shape[1], frame1.shape[0], frame1.strides[0], QImage.Format_RGB888)
-        self.graphicsView_Mode1.setPixmap(QPixmap.fromImage(img1_processed))
 
-        img2_processed = imu.resize(processImg2, width=600)
-        frame2 = cv2.cvtColor(img2_processed, cv2.COLOR_BGR2RGB)
-        cv2.waitKey(1000)
-        img2_processed = QImage(frame2, frame2.shape[1], frame2.shape[0], frame2.strides[0], QImage.Format_RGB888)
-        self.graphicsView_Mode1.setPixmap(QPixmap.fromImage(img2_processed))
+    def setPhoto1(self, img):
+        img = imu.resize(img, width=256)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = QImage(img, img.shape[1], img.shape[0], img.strides[0], QImage.Format_RGB888)
+        img = QPixmap.fromImage(img)
+        self.graphicsView_Mode1.setPixmap(img)
 
-        img3_processed = imu.resize(processImg3, width=600)
-        frame3 = cv2.cvtColor(img3_processed, cv2.COLOR_BGR2RGB)
-        cv2.waitKey(1000)
-        img3_processed = QImage(frame3, frame3.shape[1], frame3.shape[0], frame3.strides[0], QImage.Format_RGB888)
-        self.graphicsView_Mode1.setPixmap(QPixmap.fromImage(img3_processed))
+    def setPhoto2(self, img):
+        img = imu.resize(img, width=256)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = QImage(img, img.shape[1], img.shape[0], img.strides[0], QImage.Format_RGB888)
+        img = QPixmap.fromImage(img)
+        self.graphicsView_Mode2.setPixmap(img)
 
+    def setPhoto3(self, img):
+        img = imu.resize(img, width=256)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = QImage(img, img.shape[1], img.shape[0], img.strides[0], QImage.Format_RGB888)
+        img = QPixmap.fromImage(img)
+        self.graphicsView_Mode3.setPixmap(img)
 
 
 if __name__ == "__main__":
