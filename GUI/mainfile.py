@@ -34,6 +34,7 @@ class FirstProcess:
             print('Running Offine')
             self.save_path = path + '\\' + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M'))
             self.BottleCount = count
+            print('count: ', count)
             print('BottleCount', self.BottleCount)
             time_start = time.perf_counter()
             print('time_start', time_start)  # show command
@@ -166,7 +167,7 @@ class MainFunction_Thread(QtCore.QThread):
                             1, (255, 0, 0), 2)
                 cv2.putText(Running.processed_img3, 'Cap is opening', (100, 250), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (255, 0, 0), 2)
-                setup.Serial_port.write(str(Running.BottleCount).encode())
+               # setup.Serial_port.write(str(Running.BottleCount).encode())
             else:
                 cv2.putText(Running.processed_img3, 'DF: True', (100, 150), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (255, 0, 0), 2)
@@ -185,7 +186,7 @@ class MainFunction_Thread(QtCore.QThread):
             # cv2.waitKey(1)
 
             if Running.BottleCount == 30:
-                setup.Serial_port.write('Stop\n'.encode())
+                #setup.Serial_port.write('Stop\n'.encode())
                 break
         self.ExportCSV(data)
         setup.ledcontrol_send(['cl'])

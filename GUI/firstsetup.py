@@ -188,4 +188,5 @@ def offline_capture(image_path, count):
     Mode1_img = cv2.imread(path1, 0)
     Mode2_img = cv2.imread(path2, 0)
     Mode3_img = cv2.imread(path3, 0)
+    print(count)
     return Mode1_img, Mode2_img, Mode3_img
