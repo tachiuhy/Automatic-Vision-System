@@ -165,7 +165,7 @@ class MainFunction_Thread(QtCore.QThread):
                         (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
             if (Running.p4data == 'False') or (Running.p2data == 'Water level is wrong') or (
-                    Running.p3data == 'Cap opening'):
+                    Running.p3data == 'Cap is opening'):
                 cv2.putText(Running.processed_img3, 'DF: False', (100, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                 cv2.putText(Running.processed_img3, 'Water level: False', (100, 200), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (255, 0, 0), 2)
