@@ -107,6 +107,7 @@ class FirstProcess:
 
 
 class MainFunction_Thread(QtCore.QThread):
+    isRunningSignal = QtCore.pyqtSignal(bool)
     StrSignal = QtCore.pyqtSignal(str)
     Im1Signal = QtCore.pyqtSignal(object)
     Im2Signal = QtCore.pyqtSignal(object)
@@ -118,7 +119,8 @@ class MainFunction_Thread(QtCore.QThread):
         self.RunningState = 'Online'
 
     def run(self):
-        print('Main function initialized')
+
+        self.isRunningSignal.emit(True)
         data = {}
         data['Name'] = []
         data['Water level (mm)'] = []
@@ -127,7 +129,6 @@ class MainFunction_Thread(QtCore.QThread):
 
         if self.RunningState == 'Online':
             self.StrSignal.emit("System is running Online")
-            print('Online')
             camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
             setup = FST.FirstSetup()
             Serial_Port = setup.GetArduino()
@@ -138,7 +139,6 @@ class MainFunction_Thread(QtCore.QThread):
 
         elif self.RunningState == 'Offline':
             self.StrSignal.emit("System is running Offline")
-            print('Offine')
             camera = 'Offline Camera'
             setup = FST.Offline_FirstSetup()
             Serial_Port = setup.GetArduino()
@@ -146,6 +146,10 @@ class MainFunction_Thread(QtCore.QThread):
             setup.Command_Input()
             commandlist = setup.commandlist
             setup.ledcontrol_send(commandlist)
+            # self.StrSignal.emit('Slimutating Contact to LED Controller: OK')
+            # self.StrSignal.emit('Sending Commands')
+            # for i in range(0, len(commandlist)):
+            #     self.StrSignal.emit(commandlist[i], 'has been sent')
         self.StrSignal.emit("Ready to work")
         self.path = self.path
         count = 0
@@ -167,7 +171,8 @@ class MainFunction_Thread(QtCore.QThread):
                             1, (255, 0, 0), 2)
                 cv2.putText(Running.processed_img3, 'Cap is opening', (100, 250), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (255, 0, 0), 2)
-               # setup.Serial_port.write(str(Running.BottleCount).encode())
+                if self.RunningState == 'Online':
+                    setup.Serial_port.write(str(Running.BottleCount).encode())
             else:
                 cv2.putText(Running.processed_img3, 'DF: True', (100, 150), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (255, 0, 0), 2)
@@ -180,17 +185,22 @@ class MainFunction_Thread(QtCore.QThread):
             self.Im2Signal.emit(Running.Mode2_img)
             self.Im3Signal.emit(Running.processed_img3)
 
-            # cv2.imshow('Backlight', imu.resize(Running.processed_img3, width=400))
-            # cv2.imshow('Darkfield', imu.resize(Running.Mode2_img[800:1050, 700:1700], width=400))
-            # cv2.imshow('Label', imu.resize(Running.Mode1_img[900:1950, 400:2000], width=400))
-            # cv2.waitKey(1)
-
-            if Running.BottleCount == 30:
-                #setup.Serial_port.write('Stop\n'.encode())
+            if self.RunningState == 'Online':
+                setup.Serial_port.write('Stop\n'.encode())
+                self.ExportCSV(data)
+                setup.ledcontrol_send(['cl'])
+                self.StrSignal.emit("Program has stopped")
+                self.isRunningSignal.emit(False)
                 break
-        self.ExportCSV(data)
-        setup.ledcontrol_send(['cl'])
-        print('Program has stopped')    ###############################################
+            elif self.RunningState == 'Offline':
+                if Running.BottleCount == 30:
+                    self.ExportCSV(data)
+                    setup.ledcontrol_send(['cl'])
+                    self.StrSignal.emit("Program has stopped")
+                    self.isRunningSignal.emit(False)
+                    break
+                else: pass
+
 
     def ExportCSV(self, data):
         df = pd.DataFrame(data)
