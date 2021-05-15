@@ -6,7 +6,7 @@ echo Enter .ui file name:
 set /p ui=
 echo Enter .py file name: 
 set /p py=
-pyuic5 -x %ui%.ui -o %py%.py
+pyuic5.exe -x %ui%.ui -o %py%.py
 echo Convert Successfuly!
 pause
 exit
