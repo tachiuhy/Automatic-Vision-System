@@ -13,6 +13,8 @@ void setup() {
 
   InitTimersSafe();
   pinMode(9, OUTPUT);
+  pinMode(8, OUTPUT);
+  digitalWrite(8, HIGH);
   SetPinFrequencySafe(9, 1000);
 }
 
