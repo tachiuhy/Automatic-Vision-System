@@ -11,6 +11,12 @@ import os
 
 class Barcode:
     def __init__(self, img):
+        distort_map = np.array([[-0.08291928140814155, 0.11231173357747119,
+                                 0.001725213237139193, 0.0021284479282423906, 0.12024795431983677]], dtype='float32')
+        cam_map = np.array([[2423.0968913720237, 0, 1243.5312851518764],
+                            [0, 2423.0968913720237, 1010.2454733724429],
+                            [0, 0, 1]], dtype='float32')
+        img = cv2.undistort(img, cam_map, distort_map)
         img = img[1050:1960, 960:1170]
         equ = cv2.equalizeHist(img)
         self.img_smoothed = cv2.GaussianBlur(equ, (5, 5), np.sqrt(8))
@@ -38,8 +44,8 @@ Kiem tra co hay khong muc nuoc doi voi anh co hieu ung darkfield
         self.count = count
         self.path = path
         self.Preprocessor()
-        self.WaterLevelDetector()
-        if self.box is not None:
+        box = self.WaterLevelDetector()
+        if box is not None:
             path = self.path + r'_result\\DarkField'
             pathlib.Path(path).mkdir(parents=True, exist_ok=True)
             name = os.path.join(path, str(self.count) + '.tiff')
@@ -81,11 +87,12 @@ Kiem tra co hay khong muc nuoc doi voi anh co hieu ung darkfield
             for cnt in cnts:
                 x, y, w, h = cv2.boundingRect(cnt)
                 if w > 200:
-                    self.box = cv2.minAreaRect(cnt)
-                    self.box = cv2.boxPoints(self.box)
-                    self.box = np.array(self.box, dtype="int")
-                    self.box = perspective.order_points(self.box)
-                    self.box = self.box.astype(int)
+                    box = cv2.minAreaRect(cnt)
+                    box = cv2.boxPoints(box)
+                    box = np.array(box, dtype="int")
+                    box = perspective.order_points(box)
+                    box = self.box.astype(int)
+                    return box
                 else:
                     pass
 
@@ -144,7 +151,7 @@ class WaterProcess:
                 cv2.line(self.img_rgb, (int(mid_x_top), int(mid_y_top)), (int(mid_x_top + 200), int(mid_y_top)), (0, 0, 255), 2)
                 cv2.circle(edge, (int(mid_x_top + 50), int(mid_y_top)), 20, 255)
                 cv2.line(edge, (int(mid_x_top), int(mid_y_top)), (int(mid_x_top + 100), int(mid_y_top)), 255, 2)
-                self.p3data = 'Cap opening'
+                self.p3data = 'Cap is opening'
             else:
                 cv2.circle(edge, (int(mid_x_top + 50), int(mid_y_top)), 20, 255)
                 cv2.line(edge, (int(mid_x_top), int(mid_y_top)), (int(mid_x_top + 100), int(mid_y_top)), 255, 2)
