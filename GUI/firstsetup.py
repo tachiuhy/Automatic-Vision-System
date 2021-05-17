@@ -8,6 +8,7 @@ import chromedriver_autoinstaller
 import cv2
 import time
 import os
+import sys
 
 
 class FirstSetup:
@@ -46,7 +47,7 @@ class FirstSetup:
             print(self.command[i], 'has been sent')
 
     def SaveFile_read(self):
-        with open('YAML_Setting.yml') as file:
+        with open(os.path.join(sys.path[0], 'YAML_Setting.yml'), 'r') as file:
             self.content = yaml.load(file, Loader=yaml.FullLoader)
 
     def Command_Input(self):
@@ -132,7 +133,8 @@ class Offline_FirstSetup:
             print(self.command[i], 'has been sent')
 
     def SaveFile_read(self):
-        with open('YAML_Setting.yml') as file:
+        print(os.path.join(sys.path[0], 'YAML_Setting.yml'))
+        with open(os.path.join(sys.path[0], 'YAML_Setting.yml'), 'r') as file:
             self.content = yaml.load(file, Loader=yaml.FullLoader)
 
     def Command_Input(self):

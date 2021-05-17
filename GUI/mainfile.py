@@ -23,11 +23,12 @@ class FirstProcess:
             self.save_path = path + '\\' + str(datetime.datetime.now().strftime('%Y-%m-%d_%H.%M'))
             self.Camera = camera
             self.BottleCount = int(self.Serial_Port.readline())
-            time.sleep(1.9)     # tuning
+            time.sleep(1.9)  # tuning
             print('BottleCount', self.BottleCount)  # show command
             time_start = time.perf_counter()
             print('time_start', time_start)  # show command
-            self.Mode1_img = FST.capture(self.Camera, self.st['1ple'], self.st['1plgm'], self.st['1plgn'], self.st['1plds'])
+            self.Mode1_img = FST.capture(self.Camera, self.st['1ple'], self.st['1plgm'], self.st['1plgn'],
+                                         self.st['1plds'])
             self.Mode3_img = FST.capture(camera, self.st['3ple'], self.st['3plgm'], self.st['3plgn'], self.st['3plds'])
             self.Mode2_img = FST.capture(camera, self.st['2ple'], self.st['2plgm'], self.st['2plgn'], self.st['2plds'])
         elif RunningState == 'Offline':
@@ -43,8 +44,11 @@ class FirstProcess:
         try:
             # Processing Image
             self.Mode1 = IS.Barcode(self.Mode1_img)
+            print('mode1')
             self.Mode3 = IS.WaterProcess(self.Mode3_img, self.BottleCount, self.save_path)
+            print('mode3')
             self.Mode2 = IS.WaterChecking(self.Mode2_img, self.BottleCount, self.save_path)
+            print('mode2')
             self.processed_img1 = self.Mode1.img_smoothed
             self.processed_img2 = self.Mode2.eroded_img
             self.processed_img3 = self.Mode3.img_rgb
@@ -71,7 +75,6 @@ class FirstProcess:
             except Exception as e:
                 print('Failed: ', str(e))
             cv2.waitKey(10)
-
         except:
             print('Cannot processed')
             try:
@@ -119,7 +122,6 @@ class MainFunction_Thread(QtCore.QThread):
         self.RunningState = 'Online'
 
     def run(self):
-
         self.isRunningSignal.emit(True)
         data = {}
         data['Name'] = []
@@ -146,27 +148,26 @@ class MainFunction_Thread(QtCore.QThread):
             setup.Command_Input()
             commandlist = setup.commandlist
             setup.ledcontrol_send(commandlist)
-            # self.StrSignal.emit('Slimutating Contact to LED Controller: OK')
-            # self.StrSignal.emit('Sending Commands')
-            # for i in range(0, len(commandlist)):
-            #     self.StrSignal.emit(commandlist[i], 'has been sent')
+            self.StrSignal.emit('Slimutating Contact to LED Controller: OK')
+            self.StrSignal.emit('Sending Commands')
+            for i in range(0, len(commandlist)):
+                self.StrSignal.emit(str(commandlist[i]) + 'has been sent')
         self.StrSignal.emit("Ready to work")
         self.path = self.path
         count = 0
         while True:
             count += 1
             Running = FirstProcess(self.RunningState, Read_Content, Serial_Port, self.path, camera, count)
-
             data['Name'].append(Running.p1data)
             data['Water level presence'].append(Running.p4data)
             data['Water level (mm)'].append(Running.p2data)
             data['Cap Checking'].append(Running.p3data)
             cv2.putText(Running.processed_img3, 'Barcode: ' + str(Running.p1data),
                         (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-
             if (Running.p4data == 'False') or (Running.p2data == 'Water level is wrong') or (
                     Running.p3data == 'Cap is opening'):
-                cv2.putText(Running.processed_img3, 'DF: False', (100, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                cv2.putText(Running.processed_img3, 'DF: False', (100, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0),
+                            2)
                 cv2.putText(Running.processed_img3, 'Water level: False', (100, 200), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (255, 0, 0), 2)
                 cv2.putText(Running.processed_img3, 'Cap is opening', (100, 250), cv2.FONT_HERSHEY_SIMPLEX,
@@ -180,11 +181,9 @@ class MainFunction_Thread(QtCore.QThread):
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                 cv2.putText(Running.processed_img3, 'Cap is closing', (100, 250), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (255, 0, 0), 2)
-
             self.Im1Signal.emit(Running.Mode1_img)
             self.Im2Signal.emit(Running.Mode2_img)
             self.Im3Signal.emit(Running.processed_img3)
-
             if self.RunningState == 'Online':
                 setup.Serial_port.write('Stop\n'.encode())
                 self.ExportCSV(data)
@@ -199,8 +198,8 @@ class MainFunction_Thread(QtCore.QThread):
                     self.StrSignal.emit("Program has stopped")
                     self.isRunningSignal.emit(False)
                     break
-                else: pass
-
+                else:
+                    pass
 
     def ExportCSV(self, data):
         df = pd.DataFrame(data)

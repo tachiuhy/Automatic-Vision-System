@@ -97,7 +97,6 @@ Kiem tra co hay khong muc nuoc doi voi anh co hieu ung darkfield
                     pass
 
 
-
 class WaterProcess:
     def __init__(self, img, count, path):
         self.path = path
