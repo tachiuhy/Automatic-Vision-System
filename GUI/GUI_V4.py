@@ -14,6 +14,9 @@ import mainfile
 import cv2
 import imutils as imu
 import numpy as np
+import os
+import sys
+import yaml
 
 
 class Ui_MainWindow(object):
@@ -557,6 +560,97 @@ class Ui_MainWindow(object):
             QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
 # Custom_________________________________________________________________________________
+        with open(os.path.join(sys.path[0], 'YAML_Setting.yml'), 'r') as file:
+            self.YAML_Content = yaml.load(file, Loader=yaml.FullLoader)
+            self.lineEdit_1ch1i.setText(str(self.YAML_Content['1ch1i']))
+            self.lineEdit_1ch1p.setText(str(self.YAML_Content['1ch1w']))
+            self.lineEdit_1ch2i.setText(str(self.YAML_Content['1ch2i']))
+            self.lineEdit_1ch2p.setText(str(self.YAML_Content['1ch2w']))
+            self.lineEdit_1ch3i.setText(str(self.YAML_Content['1ch3i']))
+            self.lineEdit_1ch3p.setText(str(self.YAML_Content['1ch3w']))
+            self.lineEdit_1ep.setText(  str(self.YAML_Content['1ple' ] ))
+            self.lineEdit_1gn.setText(  str(self.YAML_Content['1plgn']))
+            self.lineEdit_1gm.setText(  str(self.YAML_Content['1plgm']))
+            self.lineEdit_1ds.setText(  str(self.YAML_Content['1plds']))
+
+            self.lineEdit_2ch1i.setText(str(self.YAML_Content['2ch1i']))
+            self.lineEdit_2ch1p.setText(str(self.YAML_Content['2ch1w']))
+            self.lineEdit_2ch2i.setText(str(self.YAML_Content['2ch2i']))
+            self.lineEdit_2ch2p.setText(str(self.YAML_Content['2ch2w']))
+            self.lineEdit_2ch3i.setText(str(self.YAML_Content['2ch3i']))
+            self.lineEdit_2ch3p.setText(str(self.YAML_Content['2ch3w']))
+            self.lineEdit_2ep.setText(  str(self.YAML_Content['2ple' ] ))
+            self.lineEdit_2gn.setText(  str(self.YAML_Content['2plgn']))
+            self.lineEdit_2gm.setText(  str(self.YAML_Content['2plgm']))
+            self.lineEdit_2ds.setText(  str(self.YAML_Content['2plds']))
+
+            self.lineEdit_3ch1i.setText(str(self.YAML_Content['3ch1i']))
+            self.lineEdit_3ch1p.setText(str(self.YAML_Content['3ch1w']))
+            self.lineEdit_3ch2i.setText(str(self.YAML_Content['3ch2i']))
+            self.lineEdit_3ch2p.setText(str(self.YAML_Content['3ch2w']))
+            self.lineEdit_3ch3i.setText(str(self.YAML_Content['3ch3i']))
+            self.lineEdit_3ch3p.setText(str(self.YAML_Content['3ch3w']))
+            self.lineEdit_3ep.setText(  str(self.YAML_Content['3ple' ] ))
+            self.lineEdit_3gn.setText(  str(self.YAML_Content['3plgn']))
+            self.lineEdit_3gm.setText(  str(self.YAML_Content['3plgm']))
+            self.lineEdit_3ds.setText(  str(self.YAML_Content['3plds']))
+
+            self.lineEdit_4ch1i.setText(str(self.YAML_Content['4ch1i']))
+            self.lineEdit_4ch1p.setText(str(self.YAML_Content['4ch1w']))
+            self.lineEdit_4ch2i.setText(str(self.YAML_Content['4ch2i']))
+            self.lineEdit_4ch2p.setText(str(self.YAML_Content['4ch2w']))
+            self.lineEdit_4ch3i.setText(str(self.YAML_Content['4ch3i']))
+            self.lineEdit_4ch3p.setText(str(self.YAML_Content['4ch3w']))
+            self.lineEdit_4ep.setText(  str(self.YAML_Content['4ple' ] ))
+            self.lineEdit_4gn.setText(  str(self.YAML_Content['4plgn']))
+            self.lineEdit_4gm.setText(  str(self.YAML_Content['4plgm']))
+            self.lineEdit_4ds.setText(  str(self.YAML_Content['4plds']))
+
+        self.Loaded_Settings = {'1ch1i': int(self.lineEdit_1ch1i.text()),
+                                '1ch1w': int(self.lineEdit_1ch1p.text()),
+                                '1ch2i': int(self.lineEdit_1ch2i.text()),
+                                '1ch2w': int(self.lineEdit_1ch2p.text()),
+                                '1ch3i': int(self.lineEdit_1ch3i.text()),
+                                '1ch3w': int(self.lineEdit_1ch3p.text()),
+                                '1ple' : int(self.lineEdit_1ep.text()),
+                                '1plgn': int(self.lineEdit_1gn.text()),
+                                '1plgm': int(self.lineEdit_1gm.text()),
+                                '1plds': int(self.lineEdit_1ds.text()),
+                                'Mode1': 1,
+                                '2ch1i': int(self.lineEdit_2ch1i.text()),
+                                '2ch1w': int(self.lineEdit_2ch1p.text()),
+                                '2ch2i': int(self.lineEdit_2ch2i.text()),
+                                '2ch2w': int(self.lineEdit_2ch2p.text()),
+                                '2ch3i': int(self.lineEdit_2ch3i.text()),
+                                '2ch3w': int(self.lineEdit_2ch3p.text()),
+                                '2ple' : int(self.lineEdit_2ep.text()),
+                                '2plgn': int(self.lineEdit_2gn.text()),
+                                '2plgm': int(self.lineEdit_2gm.text()),
+                                '2plds': int(self.lineEdit_2ds.text()),
+                                'Mode2': 1,
+                                '3ch1i': int(self.lineEdit_3ch1i.text()),
+                                '3ch1w': int(self.lineEdit_3ch1p.text()),
+                                '3ch2i': int(self.lineEdit_3ch2i.text()),
+                                '3ch2w': int(self.lineEdit_3ch2p.text()),
+                                '3ch3i': int(self.lineEdit_3ch3i.text()),
+                                '3ch3w': int(self.lineEdit_3ch3p.text()),
+                                '3ple' : int(self.lineEdit_3ep.text()),
+                                '3plgn': int(self.lineEdit_3gn.text()),
+                                '3plgm': int(self.lineEdit_3gm.text()),
+                                '3plds': int(self.lineEdit_3ds.text()),
+                                'Mode3': 1,
+                                '4ch1i': int(self.lineEdit_4ch1i.text()),
+                                '4ch1w': int(self.lineEdit_4ch1p.text()),
+                                '4ch2i': int(self.lineEdit_4ch2i.text()),
+                                '4ch2w': int(self.lineEdit_4ch2p.text()),
+                                '4ch3i': int(self.lineEdit_4ch3i.text()),
+                                '4ch3w': int(self.lineEdit_4ch3p.text()),
+                                '4ple' : int(self.lineEdit_4ep.text()),
+                                '4plgn': int(self.lineEdit_4gn.text()),
+                                '4plgm': int(self.lineEdit_4gm.text()),
+                                '4plds': int(self.lineEdit_4ds.text()),
+                                'Mode4': 0}
+
         self.Button_Start.setEnabled(True)
         self.Radio_RunningMode.clicked.connect(self.Radio_Button_Set)
 
@@ -715,6 +809,7 @@ class Ui_MainWindow(object):
         else:
             self.Main_Thread.RunningState = 'Online'
         self.Main_Thread.path = self.Line_Edit_Path.text()
+        self.Main_Thread.YAML_settings = self.Loaded_Settings
         self.Main_Thread.start()
 
     def System_Stop(self):

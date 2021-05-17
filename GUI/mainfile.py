@@ -56,42 +56,44 @@ class FirstProcess:
             self.p3data = self.Mode3.p3data
             self.p4data = self.Mode2.p4data
 
-            pathlib.Path(path + '\\Mode1\\').mkdir(parents=True, exist_ok=True)
-            pathlib.Path(path + '\\Mode2\\').mkdir(parents=True, exist_ok=True)
-            pathlib.Path(path + '\\Mode3\\').mkdir(parents=True, exist_ok=True)
-            pathlib.Path(path + '\\barcode\\').mkdir(parents=True, exist_ok=True)
-            name1 = os.path.join(path, 'Mode1', str(self.BottleCount) + '.tiff')
-            name2 = os.path.join(path, 'Mode2', str(self.BottleCount) + '.tiff')
-            name3 = os.path.join(path, 'Mode3', str(self.BottleCount) + '.tiff')
-            name4 = os.path.join(path, 'barcode', str(self.BottleCount) + '.tiff')
-            try:
-                print('Saving images...')
-                cv2.imwrite(name1, self.Mode1_img)
-                cv2.imwrite(name2, self.Mode2_img)
-                cv2.imwrite(name3, self.Mode3_img)
-                cv2.imwrite(name4, self.processed_img1)
-                print('Save successfully')
-            except Exception as e:
-                print('Failed: ', str(e))
-            cv2.waitKey(10)
-        except:
-            print('Cannot processed')
-            try:
+            if RunningState == 'Online':        # Only save Captured image in online mode
                 pathlib.Path(path + '\\Mode1\\').mkdir(parents=True, exist_ok=True)
                 pathlib.Path(path + '\\Mode2\\').mkdir(parents=True, exist_ok=True)
                 pathlib.Path(path + '\\Mode3\\').mkdir(parents=True, exist_ok=True)
                 pathlib.Path(path + '\\barcode\\').mkdir(parents=True, exist_ok=True)
-
                 name1 = os.path.join(path, 'Mode1', str(self.BottleCount) + '.tiff')
                 name2 = os.path.join(path, 'Mode2', str(self.BottleCount) + '.tiff')
                 name3 = os.path.join(path, 'Mode3', str(self.BottleCount) + '.tiff')
-                print('Saving images...')
-                cv2.imwrite(name1, self.Mode1_img)
-                cv2.imwrite(name2, self.Mode2_img)
-                cv2.imwrite(name3, self.Mode3_img)
-                print('Save successfully')
-            except Exception as e:
-                print('Failed: ', str(e))
+                name4 = os.path.join(path, 'barcode', str(self.BottleCount) + '.tiff')
+                try:
+                    print('Saving images...')
+                    cv2.imwrite(name1, self.Mode1_img)
+                    cv2.imwrite(name2, self.Mode2_img)
+                    cv2.imwrite(name3, self.Mode3_img)
+                    cv2.imwrite(name4, self.processed_img1)
+                    print('Save successfully')
+                except Exception as e:
+                    print('Failed: ', str(e))
+            cv2.waitKey(10)
+        except:
+            print('Cannot processed')
+            if RunningState == 'Online':    # Only save Captured image in online mode
+                try:
+                    pathlib.Path(path + '\\Mode1\\').mkdir(parents=True, exist_ok=True)
+                    pathlib.Path(path + '\\Mode2\\').mkdir(parents=True, exist_ok=True)
+                    pathlib.Path(path + '\\Mode3\\').mkdir(parents=True, exist_ok=True)
+                    pathlib.Path(path + '\\barcode\\').mkdir(parents=True, exist_ok=True)
+
+                    name1 = os.path.join(path, 'Mode1', str(self.BottleCount) + '.tiff')
+                    name2 = os.path.join(path, 'Mode2', str(self.BottleCount) + '.tiff')
+                    name3 = os.path.join(path, 'Mode3', str(self.BottleCount) + '.tiff')
+                    print('Saving images...')
+                    cv2.imwrite(name1, self.Mode1_img)
+                    cv2.imwrite(name2, self.Mode2_img)
+                    cv2.imwrite(name3, self.Mode3_img)
+                    print('Save successfully')
+                except Exception as e:
+                    print('Failed: ', str(e))
             cv2.waitKey(10)
 
             self.Condition1 = 'False Barcode'
@@ -119,6 +121,7 @@ class MainFunction_Thread(QtCore.QThread):
         QtCore.QThread.__init__(self)
         self.path = ''
         self.RunningState = 'Online'
+        self.YAML_settings = {}
 
     def run(self):
         self.isRunningSignal.emit(True)
@@ -129,12 +132,14 @@ class MainFunction_Thread(QtCore.QThread):
         data['Cap Checking'] = []
 
         if self.RunningState == 'Online':
+            self.YAML_settings = self.YAML_settings
             self.StrSignal.emit("System is running Online")
             camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
             setup = FST.FirstSetup()
             Serial_Port = setup.GetArduino()
-            Read_Content = setup.SaveFile_read()
-            commandlist = setup.Command_Input().commandlist
+            # Read_Content = setup.SaveFile_read() # Changed to YAML_settings {}
+            setup.Command_Input(self.YAML_settings)
+            commandlist = setup.commandlist
             setup.ledcontrol_send(commandlist)
             setup.Serial_port.write('Start\n'.encode())
 
@@ -143,8 +148,8 @@ class MainFunction_Thread(QtCore.QThread):
             camera = 'Offline Camera'
             setup = FST.Offline_FirstSetup()
             Serial_Port = setup.GetArduino()
-            Read_Content = setup.SaveFile_read()
-            setup.Command_Input()
+            # Read_Content = setup.SaveFile_read() # Changed to YAML_settings {}
+            setup.Command_Input(self.YAML_settings)
             commandlist = setup.commandlist
             setup.ledcontrol_send(commandlist)
             self.StrSignal.emit('Slimutating Contact to LED Controller: OK')
@@ -156,7 +161,7 @@ class MainFunction_Thread(QtCore.QThread):
         count = 0
         while True:
             count += 1
-            Running = FirstProcess(self.RunningState, Read_Content, Serial_Port, self.path, camera, count)
+            Running = FirstProcess(self.RunningState, self.YAML_settings, Serial_Port, self.path, camera, count)
             data['Name'].append(Running.p1data)
             data['Water level presence'].append(Running.p4data)
             data['Water level (mm)'].append(Running.p2data)

@@ -46,11 +46,13 @@ class FirstSetup:
             textboxes.send_keys('\n')
             print(self.command[i], 'has been sent')
 
-    def SaveFile_read(self):
-        with open(os.path.join(sys.path[0], 'YAML_Setting.yml'), 'r') as file:
-            self.content = yaml.load(file, Loader=yaml.FullLoader)
+    # def SaveFile_read(self):
+    #     with open(os.path.join(sys.path[0], 'YAML_Setting.yml'), 'r') as file:
+    #         self.content = yaml.load(file, Loader=yaml.FullLoader)
+    # Read outside the setup, Read at GUI
 
-    def Command_Input(self):
+    def Command_Input(self, content):
+        self.content = content
         MCount = 0
         for i in range(0, 4):
             o = str(i + 1)
@@ -132,12 +134,13 @@ class Offline_FirstSetup:
         for i in range(0, len(self.command)):
             print(self.command[i], 'has been sent')
 
-    def SaveFile_read(self):
-        print(os.path.join(sys.path[0], 'YAML_Setting.yml'))
-        with open(os.path.join(sys.path[0], 'YAML_Setting.yml'), 'r') as file:
-            self.content = yaml.load(file, Loader=yaml.FullLoader)
+    # def SaveFile_read(self):
+    #     with open(os.path.join(sys.path[0], 'YAML_Setting.yml'), 'r') as file:
+    #         self.content = yaml.load(file, Loader=yaml.FullLoader)
+    # Read outside the setup, Read at GUI
 
-    def Command_Input(self):
+    def Command_Input(self, content):
+        self.content = content
         MCount = 0
         for i in range(0, 4):
             o = str(i + 1)
