@@ -8,7 +8,6 @@ import pathlib
 import cv2
 import os
 
-
 class Barcode:
     def __init__(self, img):
         distort_map = np.array([[-0.08291928140814155, 0.11231173357747119,
@@ -41,19 +40,21 @@ Kiem tra co hay khong muc nuoc doi voi anh co hieu ung darkfield
 """
     def __init__(self, img, count, path):
         self.img = img
+        self.img = self.img[800:1050, 500:1700]  # the width is opened wider
+        self.Dark_img_bgr = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
         self.count = count
         self.path = path
-        self.Preprocessor()
-        box = self.WaterLevelDetector()
+        eroded_img = self.Preprocessor()
+        box = self.WaterLevelDetector(eroded_img)
         if box is not None:
             path = self.path + r'_result\\DarkField'
             pathlib.Path(path).mkdir(parents=True, exist_ok=True)
             name = os.path.join(path, str(self.count) + '.tiff')
-            cv2.putText(self.eroded_img, 'True', (15, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 1)
-
+            cv2.putText(eroded_img, 'True', (15, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 1)
+            cv2.drawContours(self.Dark_img_bgr, [box], -1, (0, 255, 0), 3)
             try:
                 print(name, ' :Saving...')
-                cv2.imwrite(name, self.eroded_img)
+                cv2.imwrite(name, eroded_img)
                 print(name, ': Save successfully')
             except Exception as e:
                 print('Failed: ', str(e))
@@ -61,26 +62,26 @@ Kiem tra co hay khong muc nuoc doi voi anh co hieu ung darkfield
 
         else:
             self.p4data = 'False'
-            cv2.putText(self.eroded_img, 'False', (15, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 1)
+            cv2.putText(eroded_img, 'False', (15, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 1)
             path = self.path + r'_result\\DarkField'
             pathlib.Path(path).mkdir(parents=True, exist_ok=True)
             name = os.path.join(path, str(self.count) + '.tiff')
             try:
                 print(name, ' :Saving...')
-                cv2.imwrite(name, self.eroded_img)
+                cv2.imwrite(name, eroded_img)
                 print(name, ': Save successfully')
             except Exception as e:
                 print('Failed: ', str(e))
 
     def Preprocessor(self):
-        self.img = self.img[800:1050, 700:1700]
         _, th = cv2.threshold(self.img, 30, 255, cv2.THRESH_BINARY)
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
         closing = cv2.morphologyEx(th, cv2.MORPH_GRADIENT, kernel, iterations=2)
-        self.eroded_img = cv2.erode(closing, (3, 3))
+        eroded_img = cv2.erode(closing, (3, 3))
+        return eroded_img
 
-    def WaterLevelDetector(self):
-        cnts = cv2.findContours(self.eroded_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    def WaterLevelDetector(self, eroded_img):
+        cnts = cv2.findContours(eroded_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imu.grab_contours(cnts)
         if len(cnts) != 0:
             (cnts, _) = contours.sort_contours(cnts)
@@ -91,7 +92,7 @@ Kiem tra co hay khong muc nuoc doi voi anh co hieu ung darkfield
                     box = cv2.boxPoints(box)
                     box = np.array(box, dtype="int")
                     box = perspective.order_points(box)
-                    box = self.box.astype(int)
+                    box = box.astype(int)
                     return box
                 else:
                     pass
@@ -102,8 +103,9 @@ class WaterProcess:
         self.path = path
         self.count = count
         self.img = img
-        self.img = self.img[300:1000, 600:1800]
-        self.img_rgb = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
+        self.img = self.img[300:1050, 700:1700]
+        self.BL_img_rgb = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
+
         edge = self.preprocessing()
         box_of_lid = self.detect_lib(edge)
         box_of_waterlevel = self.detect_waterlevel(edge)
@@ -129,12 +131,12 @@ class WaterProcess:
 
             if 13.5 < self.p2data < 16.5:                    #######################################
                 self.p2data = str(round(self.p2data, 2))
-                cv2.drawContours(self.img_rgb, [box_of_waterlevel], -1, (0, 255, 0), 3)
-                cv2.drawContours(self.img_rgb, [box_of_lid], -1, (0, 255, 0), 3)
+                cv2.drawContours(self.BL_img_rgb, [box_of_waterlevel], -1, (0, 255, 0), 3)
+                cv2.drawContours(self.BL_img_rgb, [box_of_lid], -1, (0, 255, 0), 3)
                 cv2.putText(edge, 'True', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2)
             else:
-                cv2.drawContours(self.img_rgb, [box_of_waterlevel], -1, (0, 0, 255), 3)
-                cv2.drawContours(self.img_rgb, [box_of_lid], -1, (0, 0, 255), 3)
+                cv2.drawContours(self.BL_img_rgb, [box_of_waterlevel], -1, (0, 0, 255), 3)
+                cv2.drawContours(self.BL_img_rgb, [box_of_lid], -1, (0, 0, 255), 3)
                 cv2.putText(edge, 'False', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2)
                 self.p2data = 'Water level is wrong'
             # Tinh do ho nam cua lo
@@ -146,8 +148,8 @@ class WaterProcess:
             self.p3data = np.arccos((abs(u1_x * u2_x + u1_y * u2_y)) / (
                     np.sqrt(pow(u1_x, 2) + pow(u1_y, 2)) * np.sqrt(pow(u2_x, 2) + pow(u2_y, 2))))
             if self.p3data > 0.03:
-                cv2.circle(self.img_rgb, (int(mid_x_top + 100), int(mid_y_top)), 20, (0, 0, 255))
-                cv2.line(self.img_rgb, (int(mid_x_top), int(mid_y_top)), (int(mid_x_top + 200), int(mid_y_top)), (0, 0, 255), 2)
+                cv2.circle(self.BL_img_rgb, (int(mid_x_top + 100), int(mid_y_top)), 20, (0, 0, 255))
+                cv2.line(self.BL_img_rgb, (int(mid_x_top), int(mid_y_top)), (int(mid_x_top + 200), int(mid_y_top)), (0, 0, 255), 2)
                 cv2.circle(edge, (int(mid_x_top + 50), int(mid_y_top)), 20, 255)
                 cv2.line(edge, (int(mid_x_top), int(mid_y_top)), (int(mid_x_top + 100), int(mid_y_top)), 255, 2)
                 self.p3data = 'Cap is opening'
@@ -206,7 +208,7 @@ class WaterProcess:
         hold[400:500, :] = img2
         hold[500::, :] = img3
         hold = imu.auto_canny(hold)
-        hold = cv2.dilate(hold, (3, 3), iterations=2)
+        hold = cv2.dilate(hold, (3, 3), iterations=3)
         return hold
 
     def detect_lib(self, edge):
@@ -222,7 +224,7 @@ class WaterProcess:
                 box = perspective.order_points(box)
                 box = box.astype(int)
                 #print('box', box)
-                cv2.drawContours(self.img_rgb, [box], -1, (0, 0, 255), 3)
+                cv2.drawContours(self.BL_img_rgb, [box], -1, (0, 0, 255), 3)
                 cv2.drawContours(edge, [box], -1, 255, 3)
                 return box
             else:
@@ -234,13 +236,13 @@ class WaterProcess:
         (cnts, _) = contours.sort_contours(cnts)
         for cnt in cnts:
             area = cv2.contourArea(cnt)
-            if ( 2000 < area < 100000):
+            if ( 2000 < area < 90000):
                 box1 = cv2.minAreaRect(cnt)
                 box1 = cv2.boxPoints(box1)
                 box1 = np.array(box1, dtype="int")
                 box1 = perspective.order_points(box1)
                 box1 = box1.astype(int)
-                cv2.drawContours(self.img_rgb, [box1], -1, (0, 0, 255), 3)
+                cv2.drawContours(self.BL_img_rgb, [box1], -1, (0, 0, 255), 3)
                 cv2.drawContours(edge, [box1], -1, 255, 3)
                 return box1
             else:

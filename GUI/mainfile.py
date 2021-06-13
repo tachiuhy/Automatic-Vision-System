@@ -44,14 +44,11 @@ class FirstProcess:
         try:
             # Processing Image
             self.Mode1 = IS.Barcode(self.Mode1_img)
-            print('mode1')
             self.Mode3 = IS.WaterProcess(self.Mode3_img, self.BottleCount, self.save_path)
-            print('mode3')
             self.Mode2 = IS.WaterChecking(self.Mode2_img, self.BottleCount, self.save_path)
-            print('mode2')
             self.processed_img1 = self.Mode1.img_smoothed
-            self.processed_img2 = self.Mode2.eroded_img
-            self.processed_img3 = self.Mode3.img_rgb
+            self.processed_img2 = self.Mode2.Dark_img_bgr
+            self.processed_img3 = self.Mode3.BL_img_rgb
             self.p1data = self.Mode1.p1data
             self.p2data = self.Mode3.p2data
             self.p3data = self.Mode3.p3data
@@ -96,15 +93,15 @@ class FirstProcess:
             cv2.waitKey(10)
 
             self.Condition1 = 'False Barcode'
-            self.processed_img1 = None
+            self.processed_img1 = self.Mode1_img
             self.p1data = 'Barcode not found'
 
             self.Condition2 = 'False DF'
-            self.processed_img2 = None
+            self.processed_img2 = self.Mode2_img
             self.p4data = 'Water Level not found'
 
             self.Condition3 = 'False BL'
-            self.processed_img3 = None
+            self.processed_img3 = self.Mode3_img
             self.p2data = 'Fail Water level'
             self.p3data = 'Opened Cap'
 
@@ -192,7 +189,7 @@ class MainFunction_Thread(QtCore.QThread):
                 self.isRunningSignal.emit(False)
                 break
             elif self.RunningState == 'Offline':
-                if Running.BottleCount == 30:
+                if Running.BottleCount == 360:
                     self.ExportCSV(data)
                     setup.ledcontrol_send(['cl'])
                     self.StrSignal.emit("Program has stopped")
