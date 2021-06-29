@@ -7,17 +7,120 @@ import numpy as np
 import pathlib
 import cv2
 import os
+import matplotlib.pyplot as plt
 
-class Barcode:
-    def __init__(self, img):
+class Label:
+    def __init__(self, img, count, path):
+        self.img = img
+        self.Unditort()
+        self.img = self.img[850:1950, 400:2000]
+        self.Dome_img_brg = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
+        self.count = count
+        self.path = path
+        box, ratio, edge, area = self.LabelDetector(AreaValue=20000)
+        if box is not None:
+            path = self.path + r'_result\\DomeLabelChecking'
+            pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+            name = os.path.join(path, str(self.count) + '.tiff')
+            [tl, bl, _, _] = self.cal_bouding_box(box)
+            BarcodeIMG = self.img[int(tl[1]):int(bl[1]), int(tl[0] - 80): int(tl[0] + 115)]
+            self.BarcodDecoder(BarcodeIMG)
+            if (0.65 >= ratio) or (ratio >= 0.67) or (area <= 33000):
+                cv2.drawContours(self.Dome_img_brg, [box], -1, (0, 0, 255), 3)
+                cv2.drawContours(edge, [box], -1, 255, 3)
+                cv2.putText(edge, 'False', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 255, 3)
+                self.p5data = 'False Label'
+            else:
+                cv2.drawContours(self.Dome_img_brg, [box], -1, (0, 255, 0), 3)
+                cv2.drawContours(edge, [box], -1, 255, 3)
+                cv2.putText(edge, 'True', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 255, 3)
+                self.p5data = 'True Label'
+            try:
+                print(name, ' :Saving...')
+                cv2.imwrite(name, self.Dome_img_brg)
+                print(name, ': Save successfully')
+            except Exception as e:
+                print('Failed: ', str(e))
+        else:
+            self.p5data = 'False Label'
+            cv2.putText(edge, 'False', (15, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 1)
+            path = self.path + r'_result\\DomeLabelChecking'
+            pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+            name = os.path.join(path, str(self.count) + '.tiff')
+            try:
+                print(name, ' :Saving...')
+                cv2.imwrite(name, self.Dome_img_brg)
+                print(name, ': Save successfully')
+            except Exception as e:
+                print('Failed: ', str(e))
+
+    def Unditort(self):
         distort_map = np.array([[-0.08291928140814155, 0.11231173357747119,
                                  0.001725213237139193, 0.0021284479282423906, 0.12024795431983677]], dtype='float32')
         cam_map = np.array([[2423.0968913720237, 0, 1243.5312851518764],
                             [0, 2423.0968913720237, 1010.2454733724429],
                             [0, 0, 1]], dtype='float32')
-        img = cv2.undistort(img, cam_map, distort_map)
-        img = img[1050:1960, 960:1170]
-        equ = cv2.equalizeHist(img)
+        self.img = cv2.undistort(self.img, cam_map, distort_map)
+
+    def LabelDetector(self, AreaValue=2000, extendHeight=10, extendWight=10):
+        th = cv2.adaptiveThreshold(self.img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        mol = cv2.morphologyEx(th, cv2.MORPH_OPEN, kernel, iterations=1)
+        mol = cv2.morphologyEx(mol, cv2.MORPH_CLOSE, kernel, iterations=7)
+        edge = imu.auto_canny(mol)
+        edge = cv2.morphologyEx(edge, cv2.MORPH_DILATE, kernel)
+        cnts = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = imu.grab_contours(cnts)
+        if len(cnts) != 0:
+            (cnts, _) = contours.sort_contours(cnts)
+            for cnt in cnts:
+                area = cv2.contourArea(cnt)
+                if area > AreaValue:
+                    box = cv2.minAreaRect(cnt)
+                    box = cv2.boxPoints(box)
+                    box = perspective.order_points(box)
+                    box = np.array(box, dtype="int")
+                    [tl, bl, br, tr] = self.cal_bouding_box(box)
+                    maxWidth, maxHeight = self.getOjectSize(tl, bl, br, tr)
+                    ratio = round(maxWidth / maxHeight, 4)
+                    return box, ratio, edge, area
+        else:
+            pass
+
+    def getOjectSize(self, tlPoint, blPoint, brPoint, trPoint):
+        widthA = np.sqrt(((brPoint[0] - blPoint[0]) ** 2) + ((brPoint[1] - blPoint[1]) ** 2))
+        widthB = np.sqrt(((trPoint[0] - tlPoint[0]) ** 2) + ((trPoint[1] - tlPoint[1]) ** 2))
+        maxWidth = max(int(widthA), int(widthB))
+
+        heightA = np.sqrt(((trPoint[0] - brPoint[0]) ** 2) + ((trPoint[1] - brPoint[1]) ** 2))
+        heightB = np.sqrt(((tlPoint[0] - blPoint[0]) ** 2) + ((tlPoint[1] - blPoint[1]) ** 2))
+        maxHeight = max(int(heightA), int(heightB))
+        return maxWidth, maxHeight
+
+    def cal_bouding_box(self, pc):
+        """
+            Chương trình lấy tọa độ của các điểm thuộc hộp bao theo chiều kim đồng hồ sau khi đã đóng hợp các đường bao
+            :param pc: ma trận chứ các tọa độ điểm sau khi đã lấy đường bao.
+            :return: ma trận có các tọa độ của hộp đã sắp xếp [tl(top left), tr(top right), br(bottom right), bl(bottom left)]
+        """
+
+        # Sắp xếp các điểm có từ nhỏ đến lớn theo giá trị của trụ x trong ma trận
+        xSorted = pc[np.argsort(pc[:, 0]), :]
+
+        # Thu được những điểm có tọa độ gần trụ y (leftmost) và xa trụ y (rightmost) nhất
+        leftmost = xSorted[:2, :]
+        rightmost = xSorted[2:, :]
+
+        # Từ ma trận chứ 2 điểm gần y nhất
+        leftmost = leftmost[np.argsort(leftmost[:, 1]), :]
+        (tl, bl) = leftmost
+
+        # Tìm 2 điểm còn lại bằng tính khoảng cách
+        D = dist.cdist(tl[np.newaxis], rightmost, 'euclidean')[0]
+        (br, tr) = rightmost[np.argsort(D)[::-1], :]
+        return np.array([tl, bl, br, tr], dtype='float32')
+    def BarcodDecoder(self, imgBC):
+        equ = cv2.equalizeHist(imgBC)
         self.img_smoothed = cv2.GaussianBlur(equ, (5, 5), np.sqrt(8))
         barcodes = pzb.decode(self.img_smoothed, symbols=[ZBarSymbol.CODE128])
         if len(barcodes) == 0:
@@ -41,7 +144,7 @@ Kiem tra co hay khong muc nuoc doi voi anh co hieu ung darkfield
     def __init__(self, img, count, path):
         self.img = img
         self.img = self.img[800:1050, 500:1700]  # the width is opened wider
-        self.Dark_img_bgr = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
+        self.DF_img_bgr = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
         self.count = count
         self.path = path
         eroded_img = self.Preprocessor()
@@ -51,10 +154,11 @@ Kiem tra co hay khong muc nuoc doi voi anh co hieu ung darkfield
             pathlib.Path(path).mkdir(parents=True, exist_ok=True)
             name = os.path.join(path, str(self.count) + '.tiff')
             cv2.putText(eroded_img, 'True', (15, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 1)
-            cv2.drawContours(self.Dark_img_bgr, [box], -1, (0, 255, 0), 3)
+            cv2.drawContours(self.DF_img_bgr, [box], -1, (0, 255, 0), 3)
+            cv2.drawContours(eroded_img, [box], -1,255, 3)
             try:
                 print(name, ' :Saving...')
-                cv2.imwrite(name, eroded_img)
+                cv2.imwrite(name, self.DF_img_bgr)
                 print(name, ': Save successfully')
             except Exception as e:
                 print('Failed: ', str(e))
@@ -68,7 +172,7 @@ Kiem tra co hay khong muc nuoc doi voi anh co hieu ung darkfield
             name = os.path.join(path, str(self.count) + '.tiff')
             try:
                 print(name, ' :Saving...')
-                cv2.imwrite(name, eroded_img)
+                cv2.imwrite(name, self.DF_img_bgr)
                 print(name, ': Save successfully')
             except Exception as e:
                 print('Failed: ', str(e))
@@ -103,7 +207,7 @@ class WaterProcess:
         self.path = path
         self.count = count
         self.img = img
-        self.img = self.img[300:1050, 700:1700]
+        self.img = self.img[300:1050, 600:1800]
         self.BL_img_rgb = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
 
         edge = self.preprocessing()
@@ -164,7 +268,7 @@ class WaterProcess:
 
             try:
                 print(name, ' :Saving...')
-                cv2.imwrite(name, edge)
+                cv2.imwrite(name, self.BL_img_rgb)
                 print(name, ': Save successfully')
             except Exception as e:
                 print('Failed: ', str(e))
@@ -178,20 +282,18 @@ class WaterProcess:
             name = os.path.join(path, str(count) + '.tiff')
             try:
                 print(name, ' :Saving...')
-                cv2.imwrite(name, edge)
+                cv2.imwrite(name, self.BL_img_rgb)
                 print(name, ': Save successfully')
             except Exception as e:
                 print('Failed: ', str(e))
 
     def preprocessing(self):
         img1 = self.img[0: 400, :]
-        _, img1 = cv2.threshold(img1, 25, 255, cv2.THRESH_TOZERO)
-        _, img1 = cv2.threshold(img1, 25, 255, cv2.THRESH_BINARY)
+        _, img1 = cv2.threshold(img1, 50, 255, cv2.THRESH_BINARY)
         kernel = np.ones((9, 9), np.uint8)
         img1 = cv2.morphologyEx(img1, cv2.MORPH_CLOSE, kernel)
         img1 = cv2.erode(img1, (7, 7), iterations=1)
         img1 = cv2.morphologyEx(img1, cv2.MORPH_OPEN, kernel)
-
         img2 = self.img[400:500, :]
         img2 = cv2.GaussianBlur(img2, (5, 5), np.sqrt(16))
         _, img2 = cv2.threshold(img2, 1, 255, cv2.THRESH_BINARY)

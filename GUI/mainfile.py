@@ -43,13 +43,15 @@ class FirstProcess:
 
         try:
             # Processing Image
-            self.Mode1 = IS.Barcode(self.Mode1_img)
+            self.Mode1 = IS.Label(self.Mode1_img, self.BottleCount, self.save_path)
             self.Mode3 = IS.WaterProcess(self.Mode3_img, self.BottleCount, self.save_path)
             self.Mode2 = IS.WaterChecking(self.Mode2_img, self.BottleCount, self.save_path)
-            self.processed_img1 = self.Mode1.img_smoothed
-            self.processed_img2 = self.Mode2.Dark_img_bgr
+
+            self.processed_img1 = self.Mode1.Dome_img_brg
+            self.processed_img2 = self.Mode2.DF_img_bgr
             self.processed_img3 = self.Mode3.BL_img_rgb
             self.p1data = self.Mode1.p1data
+            self.p5data = self.Mode1.p5data
             self.p2data = self.Mode3.p2data
             self.p3data = self.Mode3.p3data
             self.p4data = self.Mode2.p4data
@@ -102,7 +104,7 @@ class FirstProcess:
 
             self.Condition3 = 'False BL'
             self.processed_img3 = self.Mode3_img
-            self.p2data = 'Fail Water level'
+            self.p2data = 'False Water level'
             self.p3data = 'Opened Cap'
 
 
@@ -159,27 +161,23 @@ class MainFunction_Thread(QtCore.QThread):
             data['Water level presence'].append(Running.p4data)
             data['Water level (mm)'].append(Running.p2data)
             data['Cap Checking'].append(Running.p3data)
-            cv2.putText(Running.processed_img3, 'Barcode: ' + str(Running.p1data),
-                        (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-            if (Running.p4data == 'False') or (Running.p2data == 'Water level is wrong') or (
-                    Running.p3data == 'Cap is opening'):
-                cv2.putText(Running.processed_img3, 'DF: False', (100, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0),
-                            2)
-                cv2.putText(Running.processed_img3, 'Water level: False', (100, 200), cv2.FONT_HERSHEY_SIMPLEX,
-                            1, (255, 0, 0), 2)
-                cv2.putText(Running.processed_img3, 'Cap is opening', (100, 250), cv2.FONT_HERSHEY_SIMPLEX,
-                            1, (255, 0, 0), 2)
+            self.StrSignal.emit('')
+            self.StrSignal.emit('Barcode: ' + str(Running.p1data))
+            if (Running.p4data == 'False') or (Running.p2data == 'Water level is wrong') or \
+                    (Running.p3data == 'Cap is opening') or (Running.p5data == 'False Label'):
+                self.StrSignal.emit('DF: False')
+                self.StrSignal.emit('Water level: False')
+                self.StrSignal.emit('Cap is opening')
+                self.StrSignal.emit('False Label')
                 if self.RunningState == 'Online':
                     setup.Serial_port.write(str(Running.BottleCount).encode())
             else:
-                cv2.putText(Running.processed_img3, 'DF: True', (100, 150), cv2.FONT_HERSHEY_SIMPLEX,
-                            1, (255, 0, 0), 2)
-                cv2.putText(Running.processed_img3, 'Water level: ' + str(Running.p2data), (100, 200),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                cv2.putText(Running.processed_img3, 'Cap is closing', (100, 250), cv2.FONT_HERSHEY_SIMPLEX,
-                            1, (255, 0, 0), 2)
-            self.Im1Signal.emit(Running.Mode1_img)
-            self.Im2Signal.emit(Running.Mode2_img)
+                self.StrSignal.emit('DF: True')
+                self.StrSignal.emit('Water level: ' + str(Running.p2data))
+                self.StrSignal.emit('Cap is Closing')
+                self.StrSignal.emit('True Label')
+            self.Im1Signal.emit(Running.processed_img1)
+            self.Im2Signal.emit(Running.processed_img2)
             self.Im3Signal.emit(Running.processed_img3)
             if self.RunningState == 'Online':
                 setup.Serial_port.write('Stop\n'.encode())
@@ -189,7 +187,9 @@ class MainFunction_Thread(QtCore.QThread):
                 self.isRunningSignal.emit(False)
                 break
             elif self.RunningState == 'Offline':
-                if Running.BottleCount == 360:
+                path_check = os.path.join(self.path, 'Mode1')
+                Imgfile_path = [os.path.abspath(i) for i in os.scandir(path_check) if i.is_file()]
+                if Running.BottleCount == len(Imgfile_path):
                     self.ExportCSV(data)
                     setup.ledcontrol_send(['cl'])
                     self.StrSignal.emit("Program has stopped")

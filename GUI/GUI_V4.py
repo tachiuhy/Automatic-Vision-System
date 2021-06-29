@@ -744,29 +744,34 @@ class Ui_MainWindow(object):
         self.textBrowser.append(result)
 
     def setPhoto1(self, img):
-        img = imu.resize(img, width=256)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        cv2.waitKey(10)
-        img = QImage(img, img.shape[1], img.shape[0], img.strides[0], QImage.Format_RGB888)
-        img = QPixmap.fromImage(img)
-        self.graphicsView_Mode1.setPixmap(img)
+        if img is not None:
+            img = imu.resize(img, width=256)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            cv2.waitKey(10)
+            img = QImage(img, img.shape[1], img.shape[0], img.strides[0], QImage.Format_RGB888)
+            img = QPixmap.fromImage(img)
+            self.graphicsView_Mode1.setPixmap(img)
+        else: pass
 
     def setPhoto2(self, img):
-        img = imu.resize(img, width=256)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        cv2.waitKey(10)
-        img = QImage(img, img.shape[1], img.shape[0], img.strides[0], QImage.Format_RGB888)
-        img = QPixmap.fromImage(img)
-        self.graphicsView_Mode2.setPixmap(img)
+        if img is not None:
+            img = imu.resize(img, width=256)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            cv2.waitKey(10)
+            img = QImage(img, img.shape[1], img.shape[0], img.strides[0], QImage.Format_RGB888)
+            img = QPixmap.fromImage(img)
+            self.graphicsView_Mode2.setPixmap(img)
+        else: pass
 
     def setPhoto3(self, img):
-
-        img = imu.resize(img, width=256)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        cv2.waitKey(10)
-        img = QImage(img, img.shape[1], img.shape[0], img.strides[0], QImage.Format_RGB888)
-        img = QPixmap.fromImage(img)
-        self.graphicsView_Mode3.setPixmap(img)
+        if img is not None:
+            img = imu.resize(img, width=256)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            cv2.waitKey(10)
+            img = QImage(img, img.shape[1], img.shape[0], img.strides[0], QImage.Format_RGB888)
+            img = QPixmap.fromImage(img)
+            self.graphicsView_Mode3.setPixmap(img)
+        else: pass
 
 
 if __name__ == "__main__":
